@@ -1,0 +1,53 @@
+forms:
+- operation_id: test_external_request
+  title: External status request
+  fields:
+  - name: resource_id
+    widget_type: text
+    label: Resource ID
+    required: true
+  - name: resource_picker
+    widget_type: resource_picker
+    label: Pick Resource
+    query_id: list_example_resources
+  - name: perform_live_request
+    widget_type: boolean
+    label: Perform Live Request
+- operation_id: send_review_notification
+  title: Review notification
+  fields:
+  - name: message
+    widget_type: textarea
+    label: Message
+  - name: severity
+    widget_type: select
+    label: Severity
+    options:
+    - label: Info
+      value: info
+    - label: Warning
+      value: warning
+    - label: Critical
+      value: critical
+- operation_id: batch_score_records
+  title: Batch scoring
+  fields:
+  - name: records
+    widget_type: repeater
+    label: Records
+  - name: batch_policy
+    widget_type: batch_policy
+    label: Batch Policy
+- operation_id: run_demo_tool
+  title: Demo tool invocation
+  fields:
+  - name: tool_id
+    widget_type: resource_picker
+    label: Tool
+    query_id: list_demo_tools
+  - name: payload
+    widget_type: json
+    label: Payload
+- operation_id: oauth_profile
+  title: OAuth profile check
+  fields: []

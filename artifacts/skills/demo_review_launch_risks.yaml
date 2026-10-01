@@ -1,0 +1,32 @@
+skill_id: demo_review_launch_risks
+version: 1.0.0
+display_name: Demo Review Launch Risks
+description: Reviews launch risks for the parallel demo workflow.
+enabled: true
+category: demo
+instructions:
+- Identify a practical launch risk and mitigation.
+expected_inputs:
+- name: request
+  type: paragraph
+  required: true
+  description: Launch topic, audience, or brief for the requested risk review.
+expected_outputs:
+- name: risk_review
+  type: text
+  required: true
+  description: Risk review and mitigation.
+builder_metadata_jsonb:
+  purpose: Review a launch brief for one practical operational risk and mitigation.
+  use_cases:
+  - risk review
+  - launch readiness checks
+  anti_use_cases:
+  - content drafting
+  - direct publishing
+  composition_role: review
+  determinism_level: hybrid
+  safe_for_auto_use: false
+tags:
+- demo
+- workflow-demo

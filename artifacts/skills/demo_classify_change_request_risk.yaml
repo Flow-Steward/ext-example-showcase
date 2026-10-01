@@ -1,0 +1,47 @@
+skill_id: demo_classify_change_request_risk
+version: 1.0.0
+display_name: Demo Classify Change Request Risk
+description: Classifies submitted change requests by risk and produces a routing key for approval routing.
+enabled: true
+category: demo
+instructions:
+- Classify the submitted change request by security sensitivity and operational risk.
+- Return routing_key=human_approval for security-sensitive or high-risk requests, and routing_key=auto_approve
+  for low-risk requests.
+- Do not perform the approval; only produce classification fields for downstream workflow routing.
+expected_inputs:
+- name: request
+  type: paragraph
+  required: true
+  description: Submitted change request text or payload to classify.
+expected_outputs:
+- name: risk_classification
+  type: object
+  required: true
+  description: Structured change-request risk and security-sensitivity classification.
+- name: routing_key
+  type: text
+  required: true
+  description: Approval routing key for the workflow switch.
+builder_metadata_jsonb:
+  purpose: Classify change-request risk and produce a routing_key for approval routing workflows.
+  use_cases:
+  - change request risk classification
+  - approval routing
+  - security-sensitive request triage
+  anti_use_cases:
+  - launch copy drafting
+  - external API transport
+  - approval execution
+  composition_role: routing
+  semantic_roles:
+  - routing
+  - classification
+  - human_review
+  determinism_level: hybrid
+  safe_for_auto_use: false
+tags:
+- demo
+- workflow-demo
+- approval
+- routing

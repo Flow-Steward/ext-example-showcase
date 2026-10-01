@@ -1,0 +1,4 @@
+component_id: provider_health
+type: health_panel
+title: Runtime Health
+query_id: provider_health

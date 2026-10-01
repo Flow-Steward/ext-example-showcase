@@ -1,0 +1,155 @@
+actions:
+- action_id: save_connection_settings
+  workflow_visible: false
+  title: Save connection settings
+  description: Persist example project-scoped configuration values.
+  required_scopes:
+  - extension:invoke
+  handler:
+    mode: extension
+  parameters:
+  - name: base_url
+    type: string
+    required: false
+  - name: username
+    type: string
+    required: false
+  - name: tenant
+    type: string
+    required: false
+  - name: allowed_hosts
+    type: array
+    required: false
+  - name: mock_mode
+    type: boolean
+    required: false
+  - name: default_priority
+    type: string
+    required: false
+  - name: notification_channel
+    type: string
+    required: false
+  result_fields:
+  - result.status
+  - result.saved_config
+  - result.secret_refs
+  error_codes:
+  - invalid_payload
+  - internal_error
+  mutates_platform: false
+- action_id: save_secrets
+  workflow_visible: false
+  title: Save secrets
+  description: Demonstrates saving password/API token fields through secret refs without echoing values.
+  required_scopes:
+  - extension:invoke
+  handler:
+    mode: extension
+  parameters:
+  - name: password
+    type: string
+    required: false
+  - name: api_token
+    type: string
+    required: false
+  - name: webhook_shared_secret
+    type: string
+    required: false
+  result_fields:
+  - result.status
+  - result.secret_refs
+  error_codes:
+  - invalid_payload
+  - internal_error
+  mutates_platform: false
+- action_id: test_external_request
+  workflow_visible: true
+  title: Test external request
+  description: Build a safe external API request and run it in mock mode by default.
+  required_scopes:
+  - extension:invoke
+  handler:
+    mode: extension
+  result_fields:
+  - result.status
+  - result.external_request.url
+  - result.external_response.ok
+  error_codes:
+  - invalid_payload
+  - invalid_config
+  - external_request_blocked
+  - external_request_failed
+  mutates_platform: false
+- action_id: send_review_notification
+  workflow_visible: true
+  title: Send review notification
+  description: Demonstrates notification dispatch output shape.
+  required_scopes:
+  - extension:invoke
+  handler:
+    mode: extension
+  result_fields:
+  - result.delivered
+  - result.provider_message_id
+  error_codes:
+  - invalid_payload
+  - provider_unavailable
+  mutates_platform: false
+- action_id: batch_score_records
+  workflow_visible: true
+  title: Batch score records
+  description: Demonstrates bulk action result and partial failure shape.
+  required_scopes:
+  - extension:invoke
+  handler:
+    mode: extension
+  result_fields:
+  - result.scored_records
+  - result.failed_records
+  error_codes:
+  - invalid_payload
+  - partial_failure
+  mutates_platform: false
+- action_id: run_demo_tool
+  workflow_visible: true
+  title: Run demo tool
+  description: Demonstrates invoking bundled deterministic tool artifacts.
+  required_scopes:
+  - extension:invoke
+  handler:
+    mode: extension
+  result_fields:
+  - result.tool_result
+  error_codes:
+  - invalid_payload
+  - unknown_tool
+  mutates_platform: false
+- action_id: invoke_tool
+  workflow_visible: true
+  title: Invoke workflow tool
+  description: Runtime action used by projected workflow tool manifests, including host-managed artifact grants.
+  required_scopes:
+  - extension:invoke
+  handler:
+    mode: extension
+  result_fields:
+  - result
+  error_codes:
+  - invalid_payload
+  - unknown_tool
+  mutates_platform: false
+- action_id: oauth_profile
+  workflow_visible: true
+  title: Read OAuth profile
+  description: Demonstrates runtime OAuth access-token injection for a selected project connection.
+  required_scopes:
+  - extension:invoke
+  handler:
+    mode: extension
+  result_fields:
+  - result.connection_id
+  - result.token_received
+  - result.refresh_token_visible
+  error_codes:
+  - missing_access_token
+  mutates_platform: false

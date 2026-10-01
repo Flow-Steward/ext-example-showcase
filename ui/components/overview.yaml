@@ -1,0 +1,12 @@
+component_id: example_showcase_overview
+type: markdown
+title: Example Showcase Extension
+content: 'Reference bundle for Flow Steward extension authors.
+
+  It demonstrates a manifest v2 runtime bundle, project config and encrypted
+  secrets, callback registration, workflow trigger metadata, action/query
+  manifests, declarative UI pages, Contract v2 builder operations, and imported
+  demo workflow/agent/tool artifacts.
+
+  The extension is synthetic by design: external API calls run in mock mode unless
+  the project explicitly disables mock mode and allowlists an HTTPS host.'

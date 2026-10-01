@@ -1,0 +1,142 @@
+tool_id: demo_product_catalog_tools
+version: 1.0.0
+display_name: Demo Product Catalog Tools
+description: Loads, enriches, and stores the bundled demo product catalog.
+enabled: true
+category: demo
+prompt: Use these tools for deterministic product catalog demo workflows.
+implementation:
+  kind: extension
+  type: extension
+  extension_key: flowsteward.example-showcase
+  action: invoke_tool
+interface:
+  functions:
+  - name: demo_load_product_catalog
+    returns:
+      type: object
+      required:
+      - rows
+      - row_count
+      properties:
+        rows:
+          type: array
+          description: Selected product catalog rows.
+        catalog_rows:
+          type: array
+          description: Alias for selected catalog rows.
+        row_count:
+          type: integer
+          description: Number of rows selected for the workflow.
+        source_file:
+          type: string
+          description: Local source CSV path.
+        source_filename:
+          type: string
+          description: Source CSV filename.
+        source_artifact:
+          type: object
+          description: Input CSV artifact metadata.
+        source_file_url:
+          type: string
+          description: Download URL for the input CSV when available.
+    parameters:
+    - name: limit
+      type: integer
+      required: false
+      default: 10
+      description: Maximum rows to load.
+    - name: job_id
+      type: string
+      required: false
+  - name: demo_enrich_product_catalog
+    returns:
+      type: object
+      required:
+      - rows
+      - row_count
+      - ready_count
+      properties:
+        rows:
+          type: array
+          description: Enriched product rows.
+        enriched_catalog_rows:
+          type: array
+          description: Alias for enriched product rows.
+        row_count:
+          type: integer
+          description: Number of enriched rows.
+        ready_count:
+          type: integer
+          description: Rows marked ready after enrichment.
+    parameters:
+    - name: rows
+      type: array
+      required: true
+      description: Product rows.
+    - name: tone
+      type: string
+      required: false
+      default: friendly
+    - name: batch_label
+      type: string
+      required: false
+      default: demo-extension
+    - name: max_rows
+      type: integer
+      required: false
+      default: 100
+  - name: demo_store_product_catalog_artifact
+    artifact_policy_operation_id: invoke_tool
+    returns:
+      type: object
+      required:
+      - artifact
+      - download_url
+      properties:
+        artifact:
+          type: object
+          description: Stored CSV artifact metadata.
+        catalog_artifact:
+          type: object
+          description: Alias for stored CSV artifact metadata.
+        artifact_id:
+          type: string
+          description: Artifact identifier or deterministic digest fallback.
+        download_url:
+          type: string
+          description: Download URL for the generated CSV when available.
+    parameters:
+    - name: rows
+      type: array
+      required: true
+      description: Rows to store.
+    - name: filename
+      type: string
+      required: false
+      default: demo_enriched_catalog.csv
+    - name: job_id
+      type: string
+      required: false
+    - name: workflow_id
+      type: string
+      required: false
+    - name: retention_class
+      type: string
+      required: false
+      default: run_window
+builder_metadata_jsonb:
+  purpose: Load, enrich, and store demo product catalog data through deterministic connector operations.
+  use_cases:
+  - catalog enrichment
+  - artifact generation
+  - batch-oriented data cleanup
+  anti_use_cases:
+  - open-ended reasoning
+  - human approval routing
+  composition_role: external_action
+  determinism_level: deterministic
+  safe_for_auto_use: true
+tags:
+- demo
+- workflow-demo

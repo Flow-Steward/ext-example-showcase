@@ -1,0 +1,73 @@
+dataset_id: demo_sales_open_orders
+display_name: Demo Sales Open Orders Dataset
+description: Column-scoped orders dataset resolved through a user-selected project PostgreSQL connection.
+query_language: sql
+read_only: true
+enabled: true
+tags:
+- demo
+- workflow-demo
+- dataset-demo
+resource_scope_jsonb:
+  version: 1
+  resources:
+  - resource_id: orders
+    columns:
+    - order_id
+    - status
+    - total_amount
+schema_snapshot_jsonb:
+  schema_version: dataset_schema_snapshot.v1
+  source_kind: postgres
+  resources:
+  - resource_id: orders
+    name: orders
+    resource_type: table
+    selectable: true
+    columns:
+    - name: order_id
+      source_type: bigint
+      value_type: integer
+      nullable: false
+      default_value: null
+      primary_key: true
+      primary_key_ordinal: 1
+      ordinal: 0
+      metadata: {}
+    - name: status
+      source_type: text
+      value_type: string
+      nullable: false
+      default_value: null
+      primary_key: false
+      primary_key_ordinal: 0
+      ordinal: 1
+      metadata: {}
+    - name: total_amount
+      source_type: numeric
+      value_type: number
+      nullable: false
+      default_value: null
+      primary_key: false
+      primary_key_ordinal: 0
+      ordinal: 2
+      metadata: {}
+    indexes:
+    - name: orders_status_idx
+      unique: false
+      columns:
+      - status
+      metadata: {}
+    constraints:
+      primary_key:
+      - order_id
+    metadata:
+      toolbox_schema_name: null
+      toolbox_object_type: table
+  metadata:
+    connector_id: toolbox_postgres
+    toolbox_prebuilt: postgres
+    resource_count: 1
+metadata_jsonb:
+  connection_resolution: project_scope
+  demo_usage: Assign this dataset to a project and select a Toolbox PostgreSQL connection.

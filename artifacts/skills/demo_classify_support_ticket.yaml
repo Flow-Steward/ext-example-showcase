@@ -1,0 +1,45 @@
+skill_id: demo_classify_support_ticket
+version: 1.0.0
+display_name: Demo Classify Support Ticket
+description: Classifies incoming support tickets and returns a routing key for internal queue assignment.
+enabled: true
+category: demo
+instructions:
+- Classify the provided support ticket by urgency and issue category.
+- Return a stable routing_key that downstream workflow logic can use for internal queue assignment.
+- Do not call or assume any external ticketing system, API, connector, or queue transport.
+expected_inputs:
+- name: request
+  type: paragraph
+  required: true
+  description: Support ticket text or ticket payload to classify.
+expected_outputs:
+- name: classification
+  type: object
+  required: true
+  description: Structured support ticket urgency and category classification.
+- name: routing_key
+  type: text
+  required: true
+  description: Internal routing key for the workflow switch.
+builder_metadata_jsonb:
+  purpose: Classify support ticket text and produce a routing_key for internal workflow routing.
+  use_cases:
+  - support ticket classification
+  - internal queue routing
+  - triage label selection
+  anti_use_cases:
+  - ticket summarization
+  - external API transport
+  - connector execution
+  composition_role: routing
+  semantic_roles:
+  - routing
+  - classification
+  determinism_level: hybrid
+  safe_for_auto_use: false
+tags:
+- demo
+- workflow-demo
+- support
+- routing

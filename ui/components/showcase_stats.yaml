@@ -1,0 +1,4 @@
+component_id: showcase_stats
+type: stats_row
+title: Included Coverage
+query_id: provider_health

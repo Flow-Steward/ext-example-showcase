@@ -1,0 +1,25 @@
+policies:
+- operation_id: invoke_tool
+  outputs:
+  - kind: artifact
+    name: catalog_artifact
+    binding_key: catalog_artifact
+    filename: demo_enriched_catalog.csv
+    content_type: text/csv
+    retention_class: run_window
+    max_size_bytes: 10485760
+- operation_id: test_external_request
+  artifacts:
+  - kind: request_log
+    retention_class: run_window
+    description: Redacted outbound request metadata.
+- operation_id: batch_score_records
+  artifacts:
+  - kind: batch_report
+    retention_class: run_window
+    description: Batch scoring summary with failed item references.
+- operation_id: run_demo_tool
+  artifacts:
+  - kind: demo_tool_result
+    retention_class: run_window
+    description: Deterministic result payload from bundled demo tools.

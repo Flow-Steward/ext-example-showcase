@@ -1,0 +1,5 @@
+component_id: callback_setup
+type: callback_setup
+title: Callback Registration
+callback_id: events
+description: Registers the generic /webhook/extensions/flowsteward_example_showcase/events callback for provider events.

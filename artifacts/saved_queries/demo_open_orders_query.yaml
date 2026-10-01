@@ -1,0 +1,29 @@
+query_template_id: demo_open_orders_query
+dataset_id: demo_sales_open_orders
+display_name: Demo Open Orders Query
+description: Reads open orders through the dataset's project-scoped PostgreSQL connection.
+query_language: sql
+enabled: true
+version: 1
+query_definition_jsonb:
+  sql: SELECT order_id, status, total_amount FROM orders WHERE status = 'open'
+params_schema_jsonb:
+  type: object
+  properties: {}
+  required: []
+output_schema_jsonb:
+  type: object
+  properties:
+    order_id:
+      type: integer
+    status:
+      type: string
+    total_amount:
+      type: number
+  additionalProperties: true
+validation_result_jsonb:
+  valid: true
+  read_only: true
+  referenced_resources:
+  - orders
+  row_count: 1

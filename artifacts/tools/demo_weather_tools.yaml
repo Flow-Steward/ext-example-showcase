@@ -1,0 +1,54 @@
+tool_id: demo_weather_tools
+version: 1.0.0
+display_name: Demo Weather Tools
+description: Formats public Open-Meteo responses into concise weather briefs.
+enabled: true
+category: demo
+prompt: Use this tool after an http_request step fetches Open-Meteo weather data.
+implementation:
+  kind: extension
+  type: extension
+  extension_key: flowsteward.example-showcase
+  action: invoke_tool
+interface:
+  functions:
+  - name: demo_weather_brief
+    returns:
+      type: object
+      required:
+      - weather_summary
+      properties:
+        weather_summary:
+          type: string
+          description: Human-readable weather brief.
+        condition:
+          type: string
+          description: Weather condition summary.
+        temperature:
+          type: number
+          description: Current temperature.
+        wind_speed:
+          type: number
+          description: Current wind speed.
+    parameters:
+    - name: city
+      type: string
+      required: true
+    - name: weather_response
+      type: object
+      required: true
+builder_metadata_jsonb:
+  purpose: Format deterministic weather API responses into short human-readable briefs.
+  use_cases:
+  - external data formatting
+  - status summary generation
+  - weather response shaping
+  anti_use_cases:
+  - network requests
+  - long-form content drafting
+  composition_role: deterministic_transform
+  determinism_level: deterministic
+  safe_for_auto_use: true
+tags:
+- demo
+- workflow-demo

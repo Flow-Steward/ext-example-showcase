@@ -1,0 +1,8 @@
+page_id: artifacts
+title: Demo Artifacts
+description: Bundled demo workflows, agents, and tools.
+components:
+- ref: ../components/artifacts_overview.yaml
+- ref: ../components/workflows_grid.yaml
+- ref: ../components/agents_grid.yaml
+- ref: ../components/tools_grid.yaml

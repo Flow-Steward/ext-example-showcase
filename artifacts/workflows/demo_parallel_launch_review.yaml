@@ -1,0 +1,107 @@
+workflow_id: demo_parallel_launch_review
+version: 1.0.0
+display_name: 'Demo: Parallel Launch Review'
+description: Runs launch copy and risk review in parallel demo-static agent lanes, then merges their artifacts
+  into one readiness report.
+enabled: true
+trigger:
+  confidence_threshold: 0.0
+settings:
+  traits:
+    demo: true
+  callable:
+    enabled: true
+    trigger_channels:
+    - ui
+    - api
+    - mcp
+    - webhook
+    - schedule
+    input_mode: fields
+    strict_inputs: true
+    expected_inputs:
+    - name: request
+      type: paragraph
+      required: true
+      description: Launch brief or review request shared with the parallel agent lanes.
+    output_mode: variables
+    expected_outputs:
+    - name: launch_readiness_report
+      type: object
+      required: false
+      description: Merged report from the parallel review lanes.
+    expected_artifacts: []
+    side_effects: []
+builder_metadata_jsonb:
+  purpose: Run two specialist agents in parallel and merge their outputs into one readiness report.
+  use_cases:
+  - parallel review
+  - multi-agent orchestration
+  - launch readiness checks
+  anti_use_cases:
+  - simple deterministic transforms
+  - single-step API workflows
+  composition_role: parallel_review_workflow
+  determinism_level: agentic
+  safe_for_auto_use: false
+tags:
+- demo
+- workflow-demo
+- parallel
+- agents
+phases:
+- phase_id: parallel_review
+  phase_kind: start
+  display_name: Parallel Review
+  description: Run two independent deterministic agents in isolated lanes.
+  required_outputs:
+  - launch_copy
+  - risk_review
+  gate:
+    type: none
+  steps:
+  - step_id: write_launch_copy
+    display_name: Write launch copy
+    step_kind: agent
+    agent_id: demo_launch_copywriter
+    skill_id: demo_write_launch_copy
+    input_mapping_jsonb:
+      request: state.inputs.request
+    parallel_group: copy
+  - step_id: review_launch_risks
+    display_name: Review launch risks
+    step_kind: agent
+    agent_id: demo_launch_risk_reviewer
+    skill_id: demo_review_launch_risks
+    input_mapping_jsonb:
+      request: state.inputs.request
+    parallel_group: risk
+- phase_id: merge_review
+  display_name: Merge Parallel Outputs
+  required_outputs:
+  - launch_readiness_report
+  gate:
+    type: none
+  steps:
+  - step_id: merge_launch_review
+    display_name: Merge launch review
+    step_kind: connector
+    connector_id: connector.demo_content_tools
+    override:
+      connector:
+        function_name: demo_merge_launch_review
+    input_mapping_jsonb:
+      agent_messages: state.agent_messages
+    output_mapping_jsonb:
+      launch_readiness_report: state.launch_readiness_report
+- phase_id: complete
+  display_name: Complete
+  gate:
+    type: none
+  steps:
+  - step_id: parallel_done
+    display_name: Finish parallel demo
+    step_kind: stop_success
+    override:
+      stop_success:
+        message: Parallel review completed.

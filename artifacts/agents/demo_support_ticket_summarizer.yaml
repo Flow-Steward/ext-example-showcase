@@ -1,0 +1,39 @@
+agent_id: demo_support_ticket_summarizer
+version: 1.0.0
+display_name: Demo Support Ticket Summarizer
+description: Support agent that summarizes incoming support tickets into short customer-facing summaries.
+enabled: true
+role_type: analyst
+base_skill: demo_summarize_support_ticket
+prompts:
+  system: You summarize support tickets for customer-facing updates. Keep summaries short, concrete, and
+    faithful to the ticket text.
+  skill_prompts:
+    demo_summarize_support_ticket: Summarize the support ticket into a concise customer-facing ticket_summary.
+  local_instructions: []
+config:
+  provider: openai
+  max_iterations: 1
+  timeout_minutes: 2
+quality:
+  retry_on_failure: false
+builder_metadata_jsonb:
+  purpose: Use the support-ticket summarization skill to produce ticket_summary from incoming support
+    tickets.
+  use_cases:
+  - support ticket summarization
+  - customer-facing support summaries
+  anti_use_cases:
+  - queue routing
+  - external integrations
+  - deterministic data lookup
+  composition_role: summarization
+  determinism_level: agentic
+  safe_for_auto_use: false
+phases:
+- support_summary
+tags:
+- demo
+- workflow-demo
+- support
+- summary

@@ -1,0 +1,107 @@
+workflow_id: demo_dataset_open_orders
+version: 1.0.0
+display_name: 'Demo: Dataset Open Orders'
+description: Runs a saved dataset query against the bundled sales fixture and then reuses the returned
+  rows in a follow-up step.
+enabled: true
+trigger:
+  confidence_threshold: 0.0
+settings:
+  traits:
+    demo: true
+    dataset_demo: true
+  policies:
+    branch_strategy: none
+  callable:
+    enabled: true
+    trigger_channels:
+    - ui
+    - api
+    - mcp
+    - webhook
+    - schedule
+    input_mode: fields
+    strict_inputs: true
+    expected_inputs:
+    - name: request_note
+      type: string
+      required: false
+      description: Caller-supplied note proving named workflow input propagation.
+    output_mode: variables
+    expected_outputs:
+    - name: demo_orders_result
+      type: json
+      required: false
+      description: Dataset-query result payload with rows, row_count, and output_schema.
+    - name: demo_order_count
+      type: number
+      required: false
+      description: Count of rows returned from the saved query.
+    expected_artifacts: []
+    side_effects: []
+    allow_empty_inputs: true
+builder_metadata_jsonb:
+  purpose: Run a saved dataset query and reuse the returned rows in downstream deterministic steps.
+  use_cases:
+  - dataset query workflows
+  - report row counting
+  - saved-query reuse
+  anti_use_cases:
+  - human review loops
+  - content generation
+  composition_role: data_access_workflow
+  determinism_level: deterministic
+  safe_for_auto_use: true
+tags:
+- demo
+- workflow-demo
+- dataset-query
+- saved-query
+dependencies:
+  extensions:
+  - extension_id: flowsteward.toolbox-dataset-connector
+    required: true
+    reason: This workflow executes the projected dataset through Toolbox.
+phases:
+- phase_id: load_demo_dataset
+  phase_kind: start
+  display_name: Run Saved Query
+  gate:
+    type: none
+  steps:
+  - step_id: load_open_orders
+    display_name: Load open orders
+    step_kind: dataset_query
+    override:
+      dataset_query:
+        query_template_id: demo_open_orders_query
+        result_target: state.demo_orders_result
+        row_limit: 10
+        timeout_seconds: 30
+- phase_id: count_demo_rows
+  display_name: Count Returned Rows
+  gate:
+    type: none
+  steps:
+  - step_id: count_open_orders
+    display_name: Count open orders
+    step_kind: connector
+    connector_id: connector.std.text
+    override:
+      connector:
+        function_name: length
+    input_mapping_jsonb:
+      value: state.demo_orders_result.rows
+    output_mapping_jsonb:
+      result: state.demo_order_count
+- phase_id: complete
+  display_name: Complete
+  gate:
+    type: none
+  steps:
+  - step_id: dataset_demo_done
+    display_name: Finish dataset demo
+    step_kind: stop_success
+    override:
+      stop_success:
+        message: Dataset demo completed.

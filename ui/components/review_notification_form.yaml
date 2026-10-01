@@ -1,0 +1,28 @@
+component_id: review_notification_form
+type: form
+title: Notification Example
+ui_schema:
+  version: '1'
+  type: form_ui
+  fields:
+  - field_id: message
+    path: message
+    widget: textarea
+    label: Message
+    placeholder: Review requested for the launch plan.
+  - field_id: severity
+    path: severity
+    widget: select
+    label: Severity
+    props:
+      options:
+      - label: Info
+        value: info
+      - label: Warning
+        value: warning
+      - label: Critical
+        value: critical
+  actions:
+    test_label: Send Notification
+data:
+  test_action: send_review_notification

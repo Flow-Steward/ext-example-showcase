@@ -1,0 +1,46 @@
+agent_id: demo_change_request_risk_router
+version: 1.0.0
+display_name: Demo Change Request Risk Router
+description: Review agent that classifies change-request risk and produces a routing key for approval
+  workflows.
+enabled: true
+role_type: validator
+base_skill: demo_classify_change_request_risk
+prompts:
+  system: You classify submitted change requests by security sensitivity and operational risk for approval
+    routing. Return risk_classification plus routing_key only; do not approve or execute the change.
+  skill_prompts:
+    demo_classify_change_request_risk: Classify the change request and return risk_classification plus
+      routing_key for the workflow switch.
+  local_instructions: []
+config:
+  provider: openai
+  max_iterations: 1
+  timeout_minutes: 2
+quality:
+  retry_on_failure: false
+builder_metadata_jsonb:
+  purpose: Use the change-request risk classification skill to produce routing_key for human-approval
+    or auto-approval workflows.
+  use_cases:
+  - change request risk classification
+  - approval routing
+  - security-sensitive request triage
+  anti_use_cases:
+  - launch copy drafting
+  - external integrations
+  - approval execution
+  composition_role: routing
+  semantic_roles:
+  - routing
+  - classification
+  - human_review
+  determinism_level: agentic
+  safe_for_auto_use: false
+phases:
+- approval_routing
+tags:
+- demo
+- workflow-demo
+- approval
+- routing

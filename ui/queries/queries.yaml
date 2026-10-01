@@ -1,0 +1,99 @@
+queries:
+- query_id: provider_health
+  title: Provider health
+  description: Returns extension runtime health, project scope status, and artifact counts.
+  required_scopes:
+  - read:projects
+  result_fields:
+  - result.status
+  - result.configured
+  - result.checks
+  error_codes:
+  - not_configured
+  - internal_error
+  handler:
+    mode: extension
+- query_id: load_connection_settings
+  title: Load connection settings
+  description: Return example project configuration values for the settings form.
+  required_scopes:
+  - read:projects
+  result_fields:
+  - result.settings
+  error_codes:
+  - internal_error
+  handler:
+    mode: extension
+- query_id: connection_status
+  title: Connection status
+  description: Returns a redacted view of current connection state.
+  required_scopes:
+  - read:projects
+  result_fields:
+  - result.status
+  - result.configured
+  - result.secrets
+  error_codes:
+  - internal_error
+  handler:
+    mode: extension
+- query_id: list_demo_workflows
+  title: List demo workflows
+  description: Lists workflow artifacts included in this extension.
+  required_scopes:
+  - read:projects
+  result_fields:
+  - items[].workflow_id
+  - items[].display_name
+  error_codes:
+  - internal_error
+  handler:
+    mode: extension
+- query_id: list_demo_agents
+  title: List demo agents
+  description: Lists agent artifacts included in this extension.
+  required_scopes:
+  - read:projects
+  result_fields:
+  - items[].agent_id
+  - items[].display_name
+  error_codes:
+  - internal_error
+  handler:
+    mode: extension
+- query_id: list_demo_tools
+  title: List demo tools
+  description: Lists tool artifacts included in this extension.
+  required_scopes:
+  - read:projects
+  result_fields:
+  - items[].tool_id
+  - items[].display_name
+  error_codes:
+  - internal_error
+  handler:
+    mode: extension
+- query_id: list_example_resources
+  title: List example resources
+  description: Resource-picker query used by Contract v2 step UI examples.
+  required_scopes:
+  - read:projects
+  result_fields:
+  - items[].id
+  - items[].label
+  error_codes:
+  - internal_error
+  handler:
+    mode: extension
+- query_id: operation_contracts
+  title: Operation contracts
+  description: Lists Contract v2 operation examples projected by this extension.
+  required_scopes:
+  - read:projects
+  result_fields:
+  - items[].operation_id
+  - items[].operation_kind
+  error_codes:
+  - internal_error
+  handler:
+    mode: extension

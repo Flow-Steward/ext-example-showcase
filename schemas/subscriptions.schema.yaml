@@ -1,0 +1,32 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+additionalProperties: false
+properties:
+  events:
+    type: array
+    title: Subscribed events
+    items:
+      type: string
+      enum:
+      - job.completed
+      - job.failed
+      - approval.requested
+      - approval.received
+      - notification.interaction_received
+      - external.comment.received
+    default:
+    - job.completed
+    - approval.requested
+  severity:
+    type: string
+    enum:
+    - any
+    - info
+    - warning
+    - error
+    - critical
+    default: any
+  workflow_id:
+    type: string
+    title: Workflow scope
+    description: Optional workflow id filter.

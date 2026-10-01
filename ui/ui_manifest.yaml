@@ -1,0 +1,6 @@
+version: '1'
+pages:
+- ref: pages/overview.yaml
+- ref: pages/configuration.yaml
+- ref: pages/artifacts.yaml
+- ref: pages/operations.yaml

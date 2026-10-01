@@ -1,0 +1,82 @@
+workflow_id: demo_oauth_connection_binding
+version: 1.0.0
+display_name: 'Demo: OAuth Connection Binding'
+description: Demonstrates a reusable workflow step whose OAuth connection is selected from the
+  assigned project before execution.
+enabled: true
+trigger:
+  confidence_threshold: 0.0
+settings:
+  traits:
+    demo: true
+    connection_binding_demo: true
+  policies:
+    branch_strategy: none
+  callable:
+    enabled: true
+    trigger_channels:
+    - ui
+    - api
+    - mcp
+    input_mode: fields
+    strict_inputs: true
+    expected_inputs: []
+    output_mode: variables
+    expected_outputs:
+    - name: oauth_profile
+      type: object
+      required: false
+      description: Runtime result showing that only the OAuth access token is injected.
+    expected_artifacts: []
+    side_effects: []
+    allow_empty_inputs: true
+builder_metadata_jsonb:
+  purpose: Show how a project-assigned workflow uses a connection selected in that project.
+  use_cases:
+  - workflow connection binding
+  - multiple credentials per service
+  - OAuth runtime token injection
+  anti_use_cases:
+  - bundled deterministic tool demo
+  - public no-auth HTTP request
+  composition_role: credential_binding_workflow
+  determinism_level: requires_connection
+  safe_for_auto_use: false
+tags:
+- demo
+- workflow-demo
+- connection-binding
+- oauth
+phases:
+- phase_id: read_profile
+  phase_kind: start
+  display_name: Read OAuth Profile
+  required_outputs:
+  - oauth_profile
+  gate:
+    type: none
+  steps:
+  - step_id: read_oauth_profile
+    display_name: Read connected OAuth profile
+    step_kind: connector
+    connector_id: example_showcase.oauth_profile
+    connector_install_id: example_showcase
+    connection_binding_jsonb: {}
+    override:
+      connector:
+        extension_id: flowsteward.example-showcase
+        action_id: oauth_profile
+    input_mapping_jsonb: {}
+    output_mapping_jsonb:
+      result: state.oauth_profile
+- phase_id: complete
+  display_name: Complete
+  gate:
+    type: none
+  steps:
+  - step_id: oauth_binding_done
+    display_name: Finish OAuth binding demo
+    step_kind: stop_success
+    override:
+      stop_success:
+        message: OAuth connection binding demo completed.

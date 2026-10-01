@@ -1,0 +1,29 @@
+queries:
+- query_id: list_example_resources
+  display_name: List Example Resources
+  description: Resource picker query for external service objects.
+  cursor_mode: none
+  result_fields:
+  - items[].id
+  - items[].label
+- query_id: list_demo_workflows
+  display_name: List Demo Workflows
+  description: Returns workflow artifact manifests bundled with this extension.
+  cursor_mode: none
+  result_fields:
+  - items[].workflow_id
+  - items[].display_name
+- query_id: list_demo_agents
+  display_name: List Demo Agents
+  description: Returns agent artifact manifests bundled with this extension.
+  cursor_mode: none
+  result_fields:
+  - items[].agent_id
+  - items[].display_name
+- query_id: list_demo_tools
+  display_name: List Demo Tools
+  description: Returns tool artifact manifests bundled with this extension.
+  cursor_mode: none
+  result_fields:
+  - items[].tool_id
+  - items[].display_name

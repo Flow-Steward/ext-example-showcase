@@ -1,0 +1,36 @@
+component_id: batch_score_form
+type: form
+title: Batch Action Example
+ui_schema:
+  version: '1'
+  type: form_ui
+  fields:
+  - field_id: records
+    path: records
+    widget: repeater
+    label: Records
+    props:
+      fields:
+      - field_id: id
+        path: id
+        widget: text
+        label: Record ID
+        required: true
+      - field_id: tier
+        path: tier
+        widget: select
+        label: Tier
+        props:
+          options:
+          - label: Standard
+            value: standard
+          - label: Priority
+            value: priority
+      - field_id: active
+        path: active
+        widget: boolean
+        label: Active
+  actions:
+    test_label: Score Records
+data:
+  test_action: batch_score_records

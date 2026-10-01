@@ -1,0 +1,87 @@
+connection_types:
+- connection_type_id: example_showcase_api
+  display_name: Example External API
+  description: Project-scoped connection for a third-party service used by the showcase extension.
+  config_schema:
+    type: object
+    additionalProperties: false
+    required:
+    - base_url
+    properties:
+      base_url:
+        type: string
+        format: uri
+        title: Base URL
+        description: HTTPS base URL for the external provider.
+      username:
+        type: string
+        title: Username
+        description: Non-secret account identifier for the provider.
+      tenant:
+        type: string
+        title: Tenant
+      allowed_hosts:
+        type: array
+        title: Allowed hosts
+        items:
+          type: string
+        default:
+        - api.example.test
+  secret_schema:
+    type: object
+    additionalProperties: false
+    properties:
+      password:
+        type: string
+        title: Password
+        description: Stored as an encrypted project connection secret by Flow Steward.
+      api_token:
+        type: string
+        title: API token
+        description: Optional bearer token for provider API calls.
+  capabilities:
+    test_connection: true
+    live_request: true
+    workflow_trigger: true
+    callback_ingress: true
+  safety_profile:
+    requires_https: true
+    requires_host_allowlist: true
+    stores_secret_values: false
+- connection_type_id: example_showcase_oauth_account
+  display_name: Example OAuth Account
+  description: Mock third-party account authorized with OAuth2 Authorization Code + PKCE.
+  auth:
+    type: oauth2
+    grant: authorization_code
+    pkce: required
+    authorization_endpoint: https://idp.example.com/authorize
+    token_endpoint: https://idp.example.com/token
+    revocation_endpoint: https://idp.example.com/revoke
+    scopes:
+      required:
+      - read
+      optional:
+      - write
+    client_credentials:
+      client_id:
+        source: platform_secret
+        env: EXAMPLE_SHOWCASE_OAUTH_CLIENT_ID
+      client_secret:
+        source: platform_secret
+        env: EXAMPLE_SHOWCASE_OAUTH_CLIENT_SECRET
+        optional: true
+    refresh:
+      rotates_refresh_token: false
+    token_placement: secrets
+    secret_names:
+      access_token: access_token
+  capabilities:
+    test_connection: true
+    live_request: false
+    workflow_trigger: false
+    callback_ingress: false
+  safety_profile:
+    requires_https: true
+    requires_host_allowlist: false
+    stores_secret_values: false

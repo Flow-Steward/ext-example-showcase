@@ -1,0 +1,45 @@
+agent_id: demo_support_ticket_classifier
+version: 1.0.0
+display_name: Demo Support Ticket Classifier
+description: Support agent that classifies incoming tickets and produces a routing key for internal queue
+  assignment.
+enabled: true
+role_type: analyst
+base_skill: demo_classify_support_ticket
+prompts:
+  system: You classify support tickets for internal workflow routing. Return a concrete classification
+    and routing key, and do not assume an external ticketing system.
+  skill_prompts:
+    demo_classify_support_ticket: Classify the support ticket and return classification plus routing_key
+      for internal workflow routing.
+  local_instructions: []
+config:
+  provider: openai
+  max_iterations: 1
+  timeout_minutes: 2
+quality:
+  retry_on_failure: false
+builder_metadata_jsonb:
+  purpose: Use the support-ticket classification skill to produce classification and routing_key for internal
+    routing workflows.
+  use_cases:
+  - support ticket classification
+  - internal queue routing
+  - triage label selection
+  anti_use_cases:
+  - ticket summarization
+  - external integrations
+  - API transport
+  composition_role: routing
+  semantic_roles:
+  - routing
+  - classification
+  determinism_level: agentic
+  safe_for_auto_use: false
+phases:
+- support_triage
+tags:
+- demo
+- workflow-demo
+- support
+- routing

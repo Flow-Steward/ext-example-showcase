@@ -1,0 +1,18 @@
+component_id: tools_grid
+type: grid
+title: Tool Artifacts
+query_id: list_demo_tools
+columns:
+- key: tool_id
+  label: Tool ID
+  type: id
+- key: display_name
+  label: Name
+  type: text
+- key: coverage
+  label: Coverage
+  type: text
+row_actions:
+- action_id: run_demo_tool
+  label: Run
+  scope: row

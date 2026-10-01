@@ -1,0 +1,174 @@
+workflow_id: demo_content_campaign_router
+version: 1.0.0
+display_name: 'Demo: Content Campaign Router'
+description: Uses switch branches to choose an email, social, or blog content channel and then creates
+  a deterministic content brief.
+enabled: true
+trigger:
+  confidence_threshold: 0.0
+settings:
+  traits:
+    demo: true
+  policies:
+    branch_strategy: none
+  callable:
+    enabled: true
+    trigger_channels:
+    - ui
+    - api
+    - mcp
+    - webhook
+    - schedule
+    input_mode: fields
+    strict_inputs: true
+    expected_inputs:
+    - name: channel
+      label: Channel
+      type: select
+      required: false
+      options:
+      - email
+      - social
+      - blog
+      description: Campaign channel to route through.
+    output_mode: variables
+    expected_outputs:
+    - name: content_brief
+      type: object
+      required: false
+      description: Structured content brief for the selected channel.
+    expected_artifacts: []
+    side_effects: []
+builder_metadata_jsonb:
+  purpose: Route a requested content channel and generate the matching deterministic content brief.
+  use_cases:
+  - channel routing
+  - content brief generation
+  - switch-based workflow branching
+  anti_use_cases:
+  - multi-agent parallel review
+  - external API fetches
+  composition_role: routing_workflow
+  determinism_level: deterministic
+  safe_for_auto_use: true
+tags:
+- demo
+- workflow-demo
+- content
+- switch
+phases:
+- phase_id: route_channel
+  phase_kind: start
+  display_name: Route Channel
+  gate:
+    type: none
+  steps:
+  - step_id: channel_switch
+    display_name: Choose campaign channel
+    step_kind: switch
+    override:
+      switch:
+        selector: state.inputs.channel
+        cases:
+          email: compose_email
+          social: compose_social
+          blog: compose_blog
+        default: compose_email
+- phase_id: compose_email
+  display_name: Compose Email
+  required_outputs:
+  - content_brief
+  gate:
+    type: none
+  steps:
+  - step_id: compose_email_brief
+    display_name: Compose email brief
+    step_kind: connector
+    connector_id: connector.demo_content_tools
+    override:
+      connector:
+        function_name: demo_compose_content_brief
+    input_mapping_jsonb:
+      topic: literal:Flow Steward demo workflow extension
+      audience: literal:first-time users
+      channel: literal:email
+      tone: literal:clear
+    output_mapping_jsonb:
+      content_brief: state.content_brief
+  - step_id: email_continue
+    display_name: Continue to publish
+    step_kind: if
+    override:
+      if:
+        condition: state.content_brief
+        on_true: publish_brief
+        on_false: publish_brief
+- phase_id: compose_social
+  display_name: Compose Social
+  required_outputs:
+  - content_brief
+  gate:
+    type: none
+  steps:
+  - step_id: compose_social_brief
+    display_name: Compose social brief
+    step_kind: connector
+    connector_id: connector.demo_content_tools
+    override:
+      connector:
+        function_name: demo_compose_content_brief
+    input_mapping_jsonb:
+      topic: literal:Flow Steward demo workflow extension
+      audience: literal:automation builders
+      channel: literal:social
+      tone: literal:energetic
+    output_mapping_jsonb:
+      content_brief: state.content_brief
+  - step_id: social_continue
+    display_name: Continue to publish
+    step_kind: if
+    override:
+      if:
+        condition: state.content_brief
+        on_true: publish_brief
+        on_false: publish_brief
+- phase_id: compose_blog
+  display_name: Compose Blog
+  required_outputs:
+  - content_brief
+  gate:
+    type: none
+  steps:
+  - step_id: compose_blog_brief
+    display_name: Compose blog brief
+    step_kind: connector
+    connector_id: connector.demo_content_tools
+    override:
+      connector:
+        function_name: demo_compose_content_brief
+    input_mapping_jsonb:
+      topic: literal:Flow Steward demo workflow extension
+      audience: literal:implementation partners
+      channel: literal:blog
+      tone: literal:expert
+    output_mapping_jsonb:
+      content_brief: state.content_brief
+  - step_id: blog_continue
+    display_name: Continue to publish
+    step_kind: if
+    override:
+      if:
+        condition: state.content_brief
+        on_true: publish_brief
+        on_false: publish_brief
+- phase_id: publish_brief
+  display_name: Publish Brief
+  gate:
+    type: none
+  steps:
+  - step_id: campaign_done
+    display_name: Finish campaign routing
+    step_kind: stop_success
+    override:
+      stop_success:
+        message: Content brief completed for the selected channel.

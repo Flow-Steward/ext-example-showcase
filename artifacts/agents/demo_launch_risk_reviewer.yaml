@@ -1,0 +1,35 @@
+agent_id: demo_launch_risk_reviewer
+version: 1.0.0
+display_name: Demo Launch Risk Reviewer
+description: Deterministic demo agent that produces a launch risk review.
+enabled: true
+role_type: validator
+base_skill: demo_review_launch_risks
+tools:
+- demo_content_tools
+prompts:
+  system: You review launches for practical operational risk.
+  skill_prompts:
+    demo_review_launch_risks: Find one launch risk and a mitigation.
+  local_instructions: []
+config:
+  max_iterations: 1
+  timeout_minutes: 2
+quality:
+  retry_on_failure: false
+builder_metadata_jsonb:
+  purpose: Use the launch-risk skill to review operational risks before publishing or launch approval.
+  use_cases:
+  - risk review
+  - human approval preparation
+  anti_use_cases:
+  - copy drafting
+  - API transport
+  composition_role: review
+  determinism_level: agentic
+  safe_for_auto_use: false
+phases:
+- parallel_review
+tags:
+- demo
+- workflow-demo

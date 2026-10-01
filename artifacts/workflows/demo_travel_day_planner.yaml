@@ -1,0 +1,128 @@
+workflow_id: demo_travel_day_planner
+version: 1.0.0
+display_name: 'Demo: Travel Day Planner'
+description: Shows invoke_workflow by calling the Weather Summary child workflow, mapping child output
+  back into parent state, and composing a short planning brief.
+enabled: true
+trigger:
+  confidence_threshold: 0.0
+settings:
+  traits:
+    demo: true
+  policies:
+    branch_strategy: none
+  callable:
+    enabled: true
+    trigger_channels:
+    - ui
+    - api
+    - mcp
+    - webhook
+    - schedule
+    input_mode: fields
+    strict_inputs: true
+    expected_inputs: []
+    output_mode: variables
+    expected_outputs:
+    - name: trip_weather_summary
+      type: paragraph
+      required: false
+      description: Weather summary returned by the child workflow.
+    - name: travel_plan_brief
+      type: object
+      required: false
+      description: Structured travel day planning brief.
+    expected_artifacts: []
+    side_effects: []
+    allow_empty_inputs: true
+builder_metadata_jsonb:
+  purpose: Call a child workflow for weather context and then compose a travel-planning brief from the
+    result.
+  use_cases:
+  - workflow orchestration
+  - child workflow reuse
+  - travel planning briefs
+  anti_use_cases:
+  - high-volume data processing
+  - human approval routing
+  composition_role: workflow_orchestration
+  determinism_level: hybrid
+  safe_for_auto_use: true
+tags:
+- demo
+- workflow-demo
+- invoke-workflow
+- travel
+phases:
+- phase_id: trip_setup
+  phase_kind: start
+  display_name: Trip Setup
+  required_outputs:
+  - trip_city
+  - trip_latitude
+  - trip_longitude
+  gate:
+    type: none
+  steps:
+  - step_id: set_trip_defaults
+    display_name: Set trip defaults
+    step_kind: set_variable
+    override:
+      set_variable:
+        assignments:
+          state.trip_city: Vilnius
+          state.trip_latitude: 54.69
+          state.trip_longitude: 25.28
+- phase_id: invoke_weather
+  display_name: Invoke Weather Child
+  required_outputs:
+  - trip_weather_summary
+  gate:
+    type: none
+  steps:
+  - step_id: call_weather_child
+    display_name: Call child weather workflow
+    step_kind: invoke_workflow
+    workflow_id: demo_weather_summary_child
+    override:
+      invoke_workflow:
+        workflow_id: demo_weather_summary_child
+        input_mapping:
+          city: state.trip_city
+          latitude: state.trip_latitude
+          longitude: state.trip_longitude
+        output_mapping:
+          weather_summary: state.trip_weather_summary
+- phase_id: compose_plan
+  display_name: Compose Travel Brief
+  required_outputs:
+  - travel_plan_brief
+  gate:
+    type: none
+  steps:
+  - step_id: compose_travel_plan
+    display_name: Compose travel plan
+    step_kind: connector
+    connector_id: connector.demo_content_tools
+    override:
+      connector:
+        function_name: demo_compose_content_brief
+    input_mapping_jsonb:
+      topic: state.trip_city
+      audience: literal:day travelers
+      channel: literal:travel brief
+      tone: literal:practical
+    output_mapping_jsonb:
+      travel_plan_brief: state.travel_plan_brief
+      content_brief: state.content_brief
+- phase_id: complete
+  display_name: Complete
+  gate:
+    type: none
+  steps:
+  - step_id: travel_done
+    display_name: Finish travel demo
+    step_kind: stop_success
+    override:
+      stop_success:
+        message: Travel plan completed.

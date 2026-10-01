@@ -1,0 +1,90 @@
+tool_id: demo_content_tools
+version: 1.0.0
+display_name: Demo Content Tools
+description: Composes deterministic content briefs and merges parallel launch reviews.
+enabled: true
+category: demo
+prompt: Use these tools for content and parallel-review demo workflows.
+implementation:
+  kind: extension
+  type: extension
+  extension_key: flowsteward.example-showcase
+  action: invoke_tool
+interface:
+  functions:
+  - name: demo_measure_text
+    returns:
+      type: object
+      required:
+      - result
+      properties:
+        result:
+          type: integer
+          description: Number of characters in the supplied text.
+    parameters:
+    - name: value
+      type: string
+      required: true
+  - name: demo_compose_content_brief
+    returns:
+      type: object
+      required:
+      - content_brief
+      properties:
+        headline:
+          type: string
+          description: Generated headline.
+        body:
+          type: string
+          description: Generated body copy.
+        content_brief:
+          type: object
+          description: Structured content brief.
+        travel_plan_brief:
+          type: object
+          description: Structured travel-planning variant used by the travel demo.
+    parameters:
+    - name: topic
+      type: string
+      required: false
+      default: Flow Steward demo workflow extension
+    - name: audience
+      type: string
+      required: false
+      default: new Flow Steward users
+    - name: channel
+      type: string
+      required: false
+      default: email
+    - name: tone
+      type: string
+      required: false
+      default: clear
+  - name: demo_merge_launch_review
+    returns:
+      type: object
+      required:
+      - launch_readiness_report
+      properties:
+        launch_readiness_report:
+          type: object
+          description: Merged readiness report from parallel lanes.
+    parameters:
+    - name: agent_messages
+      type: array
+      required: true
+builder_metadata_jsonb:
+  purpose: Compose deterministic content briefs and merge structured review outputs for demo workflows.
+  use_cases:
+  - content brief generation
+  - travel brief composition
+  - parallel review merge
+  anti_use_cases:
+  - free-form reasoning
+  - external API transport
+  composition_role: deterministic_transform
+  determinism_level: deterministic
+  safe_for_auto_use: true
+tags:
+- demo
+- workflow-demo

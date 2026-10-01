@@ -1,0 +1,16 @@
+component_id: operations_grid
+type: grid
+title: Operation Contracts
+query_id: operation_contracts
+columns:
+- key: operation_id
+  label: Operation ID
+  type: id
+- key: operation_kind
+  label: Kind
+  type: badge
+  badge_map:
+    source: blue
+    action: green
+    human_channel: amber
+    bulk_action: cyan

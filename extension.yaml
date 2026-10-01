@@ -1,0 +1,142 @@
+manifest_version: 2
+lifecycle: {data_schema_version: 1, data_migrations: []}
+extension_id: flowsteward.example-showcase
+kind: tool_provider
+version: 1.0.1
+display_name: Example Showcase Extension
+description: Reference extension bundle that demonstrates Flow Steward extension structure, UI, actions, queries, workflow triggers, external API/OAuth integration patterns, and demo workflow artifacts.
+vendor:
+  name: Flow Steward
+  support_url: https://github.com/Flow-Steward/ext-example-showcase/issues
+  website_url: https://github.com/Flow-Steward/ext-example-showcase
+listing:
+  category: developer-tools
+  tags:
+  - example
+  - showcase
+  - extension-development
+  summary: Demonstrates the canonical Flow Steward extension structure, UI, actions, queries, workflow triggers, and artifact bundle.
+features:
+- tool
+- action
+- query
+- workflow_trigger
+- artifact_bundle
+required_scopes:
+- extension:invoke
+- read:projects
+schemas:
+  config: schemas/config.schema.yaml
+  secrets: schemas/secrets.schema.yaml
+  subscriptions: schemas/subscriptions.schema.yaml
+  input:
+    type: object
+    properties:
+      action:
+        type: string
+      query:
+        type: string
+      event:
+        type: object
+    required:
+    - action
+  output:
+    type: object
+    properties:
+      ok:
+        type: boolean
+      result:
+        type: object
+      errors:
+        type: array
+    required:
+    - ok
+machine_auth:
+  service_account_key: svc_ext_example_showcase
+  required_scopes:
+  - extension:invoke
+account_scope:
+  scope_type: project
+  description: Example Showcase is configured per project so config, secret refs, and workflow trigger examples stay project-scoped.
+dependencies:
+  extensions:
+  - extension_id: flowsteward.telegram
+    min_version: 1.0.0
+    max_version_exclusive: 2.0.0
+    required: false
+    reason: Demonstrates optional extension-to-extension notification dependency metadata.
+workflow_triggers:
+- trigger_type_id: example_showcase_event
+  provider_key: example_showcase
+  display_name: Example Showcase Event
+  description: Example provider-owned trigger that maps a third-party event into a workflow run.
+  event_name: external.comment.received
+  provider_ingress_url_required: true
+  config_schema:
+    type: object
+    additionalProperties: false
+    required:
+    - source
+    properties:
+      source:
+        type: string
+        enum:
+        - support
+        - billing
+        - approval
+      require_signature:
+        type: boolean
+        default: true
+      default_priority:
+        type: string
+        enum:
+        - low
+        - medium
+        - high
+        default: medium
+  ui_schema:
+    fields:
+    - name: source
+      widget_type: select
+      label: Source
+      options:
+      - label: Support
+        value: support
+      - label: Billing
+        value: billing
+      - label: Approval
+        value: approval
+    - name: require_signature
+      widget_type: boolean
+      label: Require Signature
+    - name: default_priority
+      widget_type: select
+      label: Default Priority
+      options:
+      - label: Low
+        value: low
+      - label: Medium
+        value: medium
+      - label: High
+        value: high
+entrypoint:
+  mode: subprocess
+  command:
+  - python3
+  - main.py
+health:
+  command:
+  - python3
+  - health.py
+  timeout_seconds: 5
+ui_manifest: ui/ui_manifest.yaml
+query_manifest: ui/queries/queries.yaml
+action_manifest: ui/actions/actions.yaml
+runtime:
+  extension_contract_v2:
+    connection_types: contracts/connection_types.yaml
+    operation_manifest: contracts/operation_manifest.yaml
+    step_ui_manifest: contracts/step_ui_manifest.yaml
+    resource_query_manifest: contracts/resource_query_manifest.yaml
+    event_bindings: contracts/event_bindings.yaml
+    artifact_policies: contracts/artifact_policies.yaml

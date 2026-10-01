@@ -1,0 +1,144 @@
+operations:
+- operation_id: test_external_request
+  display_name: Fetch External Status
+  description: Demonstrates a safe external API request pattern with HTTPS and host allowlisting.
+  operation_kind: source
+  connection_type_ids: [example_showcase_api]
+  category: external_api
+  inputs:
+  - name: resource_id
+    value_type: text
+    required: true
+    display_name: Resource ID
+    description: External resource identifier.
+  - name: perform_live_request
+    value_type: boolean
+    required: false
+    display_name: Perform live request
+    description: Defaults to false so the bundled example stays deterministic.
+  outputs:
+  - name: status
+    value_type: text
+    display_name: Status
+  - name: external_request
+    value_type: object
+    display_name: Request summary
+  result_fields:
+  - result.status
+  - result.external_request.url
+  error_codes:
+  - invalid_payload
+  - invalid_config
+  - external_request_blocked
+  - external_request_failed
+- operation_id: send_review_notification
+  display_name: Send Review Notification
+  description: Demonstrates notification provider dispatch for human review channels.
+  operation_kind: human_channel
+  connection_type_ids: [example_showcase_api]
+  category: notifications
+  inputs:
+  - name: message
+    value_type: text
+    required: true
+  - name: severity
+    value_type: text
+    required: false
+  outputs:
+  - name: delivered
+    value_type: boolean
+  - name: provider_message_id
+    value_type: text
+  result_fields:
+  - result.delivered
+  - result.provider_message_id
+  error_codes:
+  - invalid_payload
+  - provider_unavailable
+- operation_id: batch_score_records
+  display_name: Batch Score Records
+  description: Demonstrates a bulk operation contract with partial failure reporting.
+  operation_kind: bulk_action
+  connection_type_ids: [example_showcase_api]
+  category: batch
+  supports_batch: true
+  preferred_batch_size: 25
+  max_batch_size: 100
+  batch_input_field: records
+  partial_failure_mode: report_failed_items
+  supports_async_job: false
+  inputs:
+  - name: records
+    value_type: array
+    required: true
+  outputs:
+  - name: scored_records
+    value_type: array
+  - name: failed_records
+    value_type: array
+  result_fields:
+  - result.scored_records
+  - result.failed_records
+  error_codes:
+  - invalid_payload
+  - partial_failure
+- operation_id: run_demo_tool
+  display_name: Run Demo Tool
+  description: Demonstrates mapping a workflow connector step to a bundled deterministic tool artifact.
+  operation_kind: action
+  category: demo_artifacts
+  inputs:
+  - name: tool_id
+    value_type: text
+    required: true
+  - name: payload
+    value_type: object
+    required: false
+  outputs:
+  - name: tool_result
+    value_type: object
+  result_fields:
+  - result.tool_result
+  error_codes:
+  - invalid_payload
+  - unknown_tool
+- operation_id: invoke_tool
+  display_name: Invoke Demo Tool
+  description: Invokes a bundled demo tool and may publish an allowed run-window artifact.
+  operation_kind: action
+  category: demo_artifacts
+  inputs:
+  - name: tool_name
+    value_type: text
+    required: true
+  - name: arguments
+    value_type: object
+    required: false
+  outputs:
+  - name: result
+    value_type: object
+  result_fields:
+  - result
+  error_codes:
+  - invalid_payload
+  - unknown_tool
+- operation_id: oauth_profile
+  display_name: Read OAuth Profile
+  description: Demonstrates runtime access-token injection for an OAuth-backed project connection.
+  operation_kind: action
+  connection_type_ids: [example_showcase_oauth_account]
+  category: authentication
+  inputs: []
+  outputs:
+  - name: token_received
+    value_type: boolean
+  - name: refresh_token_visible
+    value_type: boolean
+  - name: connection_id
+    value_type: text
+  result_fields:
+  - result.connection_id
+  - result.token_received
+  - result.refresh_token_visible
+  error_codes:
+  - missing_access_token

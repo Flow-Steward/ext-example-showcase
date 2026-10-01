@@ -1,0 +1,87 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+additionalProperties: false
+required:
+- base_url
+- username
+properties:
+  base_url:
+    type: string
+    format: uri
+    title: External API base URL
+    description: HTTPS endpoint for the provider account. Live requests are blocked unless the host is allowlisted.
+    default: https://api.example.test
+  username:
+    type: string
+    minLength: 1
+    title: Username
+    description: Non-secret provider account name.
+  tenant:
+    type: string
+    title: Tenant
+    description: Optional provider tenant or workspace key.
+  allowed_hosts:
+    type: array
+    title: Allowed hosts
+    description: Host allowlist used before any optional live external API request.
+    items:
+      type: string
+      minLength: 1
+    default:
+    - api.example.test
+  mock_mode:
+    type: boolean
+    title: Mock mode
+    description: Keep enabled for deterministic local tests and demos.
+    default: true
+  default_priority:
+    type: string
+    title: Default priority
+    enum:
+    - low
+    - medium
+    - high
+    default: medium
+  notification_channel:
+    type: string
+    title: Notification channel
+    description: Named project channel used by notification examples.
+    default: showcase-review
+  labels:
+    type: array
+    title: Labels
+    items:
+      type: string
+    default:
+    - example
+    - showcase
+
+# Conditional requirements — the pattern most integrations need.
+#
+# A flat `required` list can only say "always". Real connectors need "required
+# WHEN", and the platform executes that: allOf with if/then, keyed on a field
+# whose value decides. Declare it here, in the schema, rather than checking it
+# in your extension code — the platform enforces the declaration on every path
+# that writes a connection, and your form marks the field required from the
+# same source.
+#
+# Here: mock_mode off means live outbound requests, and those are refused
+# unless the host is allowlisted, so allowed_hosts stops being optional. Leave
+# mock_mode on and it stays optional.
+#
+# The platform executes type, enum, const, required, properties,
+# additionalProperties, items, the length and range bounds, oneOf, anyOf,
+# allOf, if/then/else and dependentRequired. Anything else is REFUSED at
+# install rather than ignored, so you find out immediately instead of shipping
+# a rule that never runs.
+allOf:
+- if:
+    properties:
+      mock_mode:
+        const: false
+    required:
+    - mock_mode
+  then:
+    required:
+    - allowed_hosts
+

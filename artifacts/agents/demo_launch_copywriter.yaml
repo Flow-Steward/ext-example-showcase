@@ -1,0 +1,39 @@
+agent_id: demo_launch_copywriter
+version: 1.0.0
+display_name: Demo Launch Copywriter
+description: Launch email copywriter that drafts audience-aware messaging from a campaign brief.
+enabled: true
+role_type: marketing_operator
+base_skill: demo_write_launch_copy
+tools:
+- demo_content_tools
+prompts:
+  system: You write concise launch emails from campaign context. Tailor the subject and body to the stated
+    audience, preserve the core value proposition, and avoid demo-only framing unless the user explicitly
+    asks for it.
+  skill_prompts:
+    demo_write_launch_copy: Write a short launch email with a specific subject and body, grounded in the
+      campaign brief and target audience.
+  local_instructions: []
+config:
+  provider: openai
+  max_iterations: 1
+  timeout_minutes: 2
+quality:
+  retry_on_failure: false
+builder_metadata_jsonb:
+  purpose: Use the launch-copy skill to draft a short marketing message in a workflow lane.
+  use_cases:
+  - copy drafting
+  - launch messaging
+  anti_use_cases:
+  - risk analysis
+  - deterministic payload transforms
+  composition_role: content_generation
+  determinism_level: agentic
+  safe_for_auto_use: false
+phases:
+- parallel_review
+tags:
+- demo
+- workflow-demo

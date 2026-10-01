@@ -1,0 +1,8 @@
+page_id: configuration
+title: Configuration
+description: Project-scoped config, encrypted secrets, and external API request example.
+components:
+- ref: ../components/connection_form.yaml
+- ref: ../components/secrets_form.yaml
+- ref: ../components/external_request_form.yaml
+- ref: ../components/connection_status.yaml

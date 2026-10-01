@@ -1,0 +1,6 @@
+component_id: operations_overview
+type: markdown
+title: Contract v2 Operations
+content: 'Contract v2 is the builder-facing contract for extension-provided
+  operations. This bundle includes source, action, human-channel, bulk-action,
+  resource query, step UI, event binding, and artifact policy examples.'

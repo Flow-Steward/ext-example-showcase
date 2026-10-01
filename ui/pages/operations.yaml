@@ -1,0 +1,8 @@
+page_id: operations
+title: Operations
+description: Contract v2 operations and builder-facing examples.
+components:
+- ref: ../components/operations_overview.yaml
+- ref: ../components/operations_grid.yaml
+- ref: ../components/batch_score_form.yaml
+- ref: ../components/review_notification_form.yaml

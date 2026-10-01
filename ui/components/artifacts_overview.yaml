@@ -1,0 +1,8 @@
+component_id: artifacts_overview
+type: markdown
+title: Artifact Bundle
+content: 'The `artifacts/` folder contains the demo workflow seed split into
+  workflow, agent, skill, tool, dataset, saved-query, and connection manifests.
+
+  Use `extension-descriptor.yaml` to see how workflow/agent/skill/tool artifacts
+  are referenced for descriptor import and release projection.'

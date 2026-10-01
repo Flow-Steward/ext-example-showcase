@@ -1,0 +1,8 @@
+page_id: overview
+title: Overview
+description: Extension runtime, health, callback, and capability summary.
+components:
+- ref: ../components/overview.yaml
+- ref: ../components/health_panel.yaml
+- ref: ../components/showcase_stats.yaml
+- ref: ../components/callback_setup.yaml

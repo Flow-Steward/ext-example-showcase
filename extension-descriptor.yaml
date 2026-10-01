@@ -1,0 +1,133 @@
+schema_version: extension_descriptor_v1
+lifecycle: {data_schema_version: 1, data_migrations: []}
+extension_id: flowsteward.example-showcase
+release_version: 1.0.1
+extension_type: service_extension
+identity:
+  display_name: Example Showcase Extension
+  description: Reference extension bundle with runtime UI, actions, queries, callbacks, OAuth2 connections,
+    Contract v2 operations, and demo workflow artifacts.
+  tags:
+  - example
+  - showcase
+  - extensions
+  - workflows
+vendor:
+  vendor_name: Flow Steward
+  support_url: https://github.com/vasily-piksis/agentic-team/issues
+listing:
+  visibility: public_reference
+  category: developer_examples
+distribution:
+  channel: private_byo
+  execution_modes:
+  - local
+  allows_self_hosted: true
+  requires_connected_control_plane: false
+  import_sources:
+  - file
+runtime:
+  contract_version: extension_host_v1
+  compatibility:
+    platform_min: 0.1.0
+  extension_contract_v2:
+    connection_types: contracts/connection_types.yaml
+    operation_manifest: contracts/operation_manifest.yaml
+    step_ui_manifest: contracts/step_ui_manifest.yaml
+    resource_query_manifest: contracts/resource_query_manifest.yaml
+    event_bindings: contracts/event_bindings.yaml
+    artifact_policies: contracts/artifact_policies.yaml
+dependencies:
+  extensions:
+  - extension_id: flowsteward.telegram
+    min_version: 1.0.0
+    max_version_exclusive: 2.0.0
+    required: false
+    reason: Demonstrates optional extension-to-extension notification dependency metadata.
+artifacts:
+  workflows:
+  - workflow_id: demo_content_campaign_router
+    ref: artifacts/workflows/demo_content_campaign_router.yaml
+    publish: true
+  - workflow_id: demo_dataset_open_orders
+    ref: artifacts/workflows/demo_dataset_open_orders.yaml
+    publish: true
+  - workflow_id: demo_expected_failure_guardrail
+    ref: artifacts/workflows/demo_expected_failure_guardrail.yaml
+    publish: true
+  - workflow_id: demo_incoming_webhook_router
+    ref: artifacts/workflows/demo_incoming_webhook_router.yaml
+    publish: true
+  - workflow_id: demo_oauth_connection_binding
+    ref: artifacts/workflows/demo_oauth_connection_binding.yaml
+    publish: true
+  - workflow_id: demo_parallel_launch_review
+    ref: artifacts/workflows/demo_parallel_launch_review.yaml
+    publish: true
+  - workflow_id: demo_product_catalog_enrichment
+    ref: artifacts/workflows/demo_product_catalog_enrichment.yaml
+    publish: true
+  - workflow_id: demo_travel_day_planner
+    ref: artifacts/workflows/demo_travel_day_planner.yaml
+    publish: true
+  - workflow_id: demo_weather_city_brief
+    ref: artifacts/workflows/demo_weather_city_brief.yaml
+    publish: true
+  - workflow_id: demo_weather_summary_child
+    ref: artifacts/workflows/demo_weather_summary_child.yaml
+    publish: true
+  agents:
+  - agent_id: demo_change_request_risk_router
+    ref: artifacts/agents/demo_change_request_risk_router.yaml
+    publish: true
+  - agent_id: demo_launch_copywriter
+    ref: artifacts/agents/demo_launch_copywriter.yaml
+    publish: true
+  - agent_id: demo_launch_risk_reviewer
+    ref: artifacts/agents/demo_launch_risk_reviewer.yaml
+    publish: true
+  - agent_id: demo_support_ticket_classifier
+    ref: artifacts/agents/demo_support_ticket_classifier.yaml
+    publish: true
+  - agent_id: demo_support_ticket_summarizer
+    ref: artifacts/agents/demo_support_ticket_summarizer.yaml
+    publish: true
+  skills:
+  - skill_id: demo_classify_change_request_risk
+    ref: artifacts/skills/demo_classify_change_request_risk.yaml
+    publish: true
+  - skill_id: demo_classify_support_ticket
+    ref: artifacts/skills/demo_classify_support_ticket.yaml
+    publish: true
+  - skill_id: demo_review_launch_risks
+    ref: artifacts/skills/demo_review_launch_risks.yaml
+    publish: true
+  - skill_id: demo_summarize_support_ticket
+    ref: artifacts/skills/demo_summarize_support_ticket.yaml
+    publish: true
+  - skill_id: demo_write_launch_copy
+    ref: artifacts/skills/demo_write_launch_copy.yaml
+    publish: true
+  tools:
+  - tool_id: demo_content_tools
+    ref: artifacts/tools/demo_content_tools.yaml
+    publish: true
+  - tool_id: demo_product_catalog_tools
+    ref: artifacts/tools/demo_product_catalog_tools.yaml
+    publish: true
+  - tool_id: demo_weather_tools
+    ref: artifacts/tools/demo_weather_tools.yaml
+    publish: true
+  datasets:
+  - dataset_id: demo_sales_open_orders
+    ref: artifacts/datasets/demo_sales_open_orders.yaml
+    publish: true
+  saved_queries:
+  - query_template_id: demo_open_orders_query
+    ref: artifacts/saved_queries/demo_open_orders_query.yaml
+    publish: true
+provenance:
+  origin: imported
+  notes: Bundle-local YAML artifacts are the sole source of truth.
+commerce:
+  billing_mode: free

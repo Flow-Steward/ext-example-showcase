@@ -1,0 +1,36 @@
+skill_id: demo_summarize_support_ticket
+version: 1.0.0
+display_name: Demo Summarize Support Ticket
+description: Summarizes incoming support tickets into short customer-facing summaries.
+enabled: true
+category: demo
+instructions:
+- Summarize the provided support ticket in concise customer-facing language.
+- Preserve the customer's issue, urgency, and any requested next step.
+- Return only the ticket summary text unless the workflow asks for structured fields.
+expected_inputs:
+- name: request
+  type: paragraph
+  required: true
+  description: Support ticket text or ticket payload to summarize.
+expected_outputs:
+- name: ticket_summary
+  type: text
+  required: true
+  description: Short customer-facing support ticket summary.
+builder_metadata_jsonb:
+  purpose: Summarize support ticket text into a short customer-facing ticket_summary output.
+  use_cases:
+  - support ticket summarization
+  - customer-facing summary generation
+  anti_use_cases:
+  - queue routing
+  - external API transport
+  composition_role: summarization
+  determinism_level: hybrid
+  safe_for_auto_use: false
+tags:
+- demo
+- workflow-demo
+- support
+- summary

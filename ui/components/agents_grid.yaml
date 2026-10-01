@@ -1,0 +1,14 @@
+component_id: agents_grid
+type: grid
+title: Agent Artifacts
+query_id: list_demo_agents
+columns:
+- key: agent_id
+  label: Agent ID
+  type: id
+- key: display_name
+  label: Name
+  type: text
+- key: base_skill
+  label: Base Skill
+  type: id

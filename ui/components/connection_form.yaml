@@ -1,0 +1,77 @@
+component_id: connection_form
+type: form
+title: Connection Settings
+schema_ref: ../../schemas/config.schema.yaml
+ui_schema:
+  version: '1'
+  type: form_ui
+  layout:
+    columns: 2
+  sections:
+  - section_id: account
+    title: Provider Account
+    field_ids:
+    - base_url
+    - username
+    - tenant
+  - section_id: safety
+    title: Request Safety
+    field_ids:
+    - allowed_hosts
+    - mock_mode
+    - default_priority
+    - notification_channel
+  fields:
+  - field_id: base_url
+    path: base_url
+    widget: url
+    section_id: account
+    label: Base URL
+    placeholder: https://api.example.test
+  - field_id: username
+    path: username
+    widget: text
+    section_id: account
+    label: Username
+  - field_id: tenant
+    path: tenant
+    widget: text
+    section_id: account
+    label: Tenant
+  - field_id: allowed_hosts
+    path: allowed_hosts
+    widget: tag_picker
+    section_id: safety
+    label: Allowed Hosts
+    help: External API calls are blocked unless the request host is in this list.
+  - field_id: mock_mode
+    path: mock_mode
+    widget: boolean
+    section_id: safety
+    label: Mock Mode
+  - field_id: default_priority
+    path: default_priority
+    widget: select
+    section_id: safety
+    label: Default Priority
+    props:
+      options:
+      - label: Low
+        value: low
+      - label: Medium
+        value: medium
+      - label: High
+        value: high
+  - field_id: notification_channel
+    path: notification_channel
+    widget: text
+    section_id: safety
+    label: Notification Channel
+  actions:
+    save_label: Save Settings
+    test_label: Test Request
+data:
+  load_query: load_connection_settings
+  save_action: save_connection_settings
+  test_action: test_external_request
+  save_mode: patch

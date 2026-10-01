@@ -1,0 +1,35 @@
+skill_id: demo_write_launch_copy
+version: 1.0.0
+display_name: Demo Write Launch Copy
+description: Drafts audience-aware launch email copy from a campaign brief.
+enabled: true
+category: demo
+instructions:
+- Draft a concise launch email from the provided campaign context.
+- Adapt the message to the stated audience, preserve the main value proposition, and keep the copy concrete
+  rather than generic.
+- Return production-style launch wording, not demo framing or placeholder sample language.
+expected_inputs:
+- name: request
+  type: paragraph
+  required: true
+  description: Launch topic, audience, or brief for the requested copy.
+expected_outputs:
+- name: launch_copy
+  type: text
+  required: true
+  description: Short launch copy.
+builder_metadata_jsonb:
+  purpose: Generate concise launch copy from a supplied launch brief.
+  use_cases:
+  - copy drafting
+  - marketing message generation
+  anti_use_cases:
+  - risk review
+  - external delivery
+  composition_role: content_generation
+  determinism_level: hybrid
+  safe_for_auto_use: false
+tags:
+- demo
+- workflow-demo

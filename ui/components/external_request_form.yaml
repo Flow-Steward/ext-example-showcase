@@ -1,0 +1,21 @@
+component_id: external_request_form
+type: form
+title: External API Request Example
+description: Runs in mock mode by default. Disable mock mode and allowlist an HTTPS host before live calls.
+ui_schema:
+  version: '1'
+  type: form_ui
+  fields:
+  - field_id: resource_id
+    path: resource_id
+    widget: text
+    label: Resource ID
+    placeholder: demo-resource-1
+  - field_id: perform_live_request
+    path: perform_live_request
+    widget: boolean
+    label: Perform Live Request
+  actions:
+    test_label: Test External Request
+data:
+  test_action: test_external_request

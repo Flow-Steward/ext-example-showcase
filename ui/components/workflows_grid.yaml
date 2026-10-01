@@ -1,0 +1,17 @@
+component_id: workflows_grid
+type: grid
+title: Workflow Artifacts
+query_id: list_demo_workflows
+columns:
+- key: workflow_id
+  label: Workflow ID
+  type: id
+- key: display_name
+  label: Name
+  type: text
+- key: coverage
+  label: Coverage
+  type: text
+empty_state:
+  title: No workflows
+  description: The workflow artifact directory is empty.

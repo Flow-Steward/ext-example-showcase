@@ -1,0 +1,92 @@
+workflow_id: demo_expected_failure_guardrail
+version: 1.0.0
+display_name: 'Demo: Expected Failure Guardrail'
+description: A tiny workflow that intentionally terminates with stop_fail so operators can test failure
+  handling.
+enabled: true
+trigger:
+  confidence_threshold: 0.0
+settings:
+  traits:
+    demo: true
+    expected_failure: true
+  policies:
+    branch_strategy: none
+  callable:
+    enabled: true
+    trigger_channels:
+    - ui
+    - api
+    - mcp
+    - webhook
+    - schedule
+    input_mode: fields
+    strict_inputs: true
+    expected_inputs: []
+    output_mode: side_effect
+    expected_outputs: []
+    expected_artifacts: []
+    side_effects:
+    - kind: expected_failure
+      target: workflow_status
+      description: Intentionally terminates with stop_fail for failure-path testing.
+    allow_empty_inputs: true
+builder_metadata_jsonb:
+  purpose: Intentionally terminate with stop_fail so operators can test failure handling and guardrail
+    paths.
+  use_cases:
+  - failure-path testing
+  - guardrail verification
+  anti_use_cases:
+  - normal business automation
+  - successful completion flows
+  composition_role: guardrail_test_workflow
+  determinism_level: deterministic
+  safe_for_auto_use: false
+tags:
+- demo
+- workflow-demo
+- expected-failure
+- stop-fail
+phases:
+- phase_id: prepare_failure
+  phase_kind: start
+  display_name: Prepare Failure Context
+  required_outputs:
+  - failure_reason_length
+  gate:
+    type: none
+  steps:
+  - step_id: set_failure_reason
+    display_name: Set failure reason
+    step_kind: set_variable
+    override:
+      set_variable:
+        assignments:
+          state.failure_reason: This demo intentionally stops with stop_fail to verify failure paths.
+  - step_id: measure_failure_reason
+    display_name: Measure failure reason
+    step_kind: connector
+    connector_id: connector.demo_content_tools
+    override:
+      connector:
+        function_name: demo_measure_text
+        input_mapping:
+          value: state.failure_reason
+        output_mapping:
+          result: state.failure_reason_length
+    input_mapping_jsonb:
+      value: state.failure_reason
+    output_mapping_jsonb:
+      result: state.failure_reason_length
+- phase_id: fail_intentionally
+  display_name: Fail Intentionally
+  gate:
+    type: none
+  steps:
+  - step_id: expected_stop_fail
+    display_name: Intentional stop_fail
+    step_kind: stop_fail
+    override:
+      stop_fail:
+        reason: Intentional demo failure.

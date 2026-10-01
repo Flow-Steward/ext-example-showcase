@@ -1,0 +1,18 @@
+bindings:
+- trigger_id: example_showcase_review_requested
+  event_name: approval.requested
+  operation_id: send_review_notification
+  mapping:
+    message: event.summary
+    severity: event.severity
+- trigger_id: example_showcase_job_completed
+  event_name: job.completed
+  operation_id: test_external_request
+  mapping:
+    resource_id: event.job_id
+- trigger_id: example_showcase_comment_received
+  event_name: interaction.received
+  operation_id: run_demo_tool
+  mapping:
+    tool_id: demo_content_tools
+    payload: event.payload
