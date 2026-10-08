@@ -20,6 +20,7 @@ subprocess extension without depending on a real third-party service.
 | External API integration pattern | `handlers/actions.py::test_external_request` |
 | OAuth2 connection-scoped credentials | `contracts/connection_types.yaml`, `handlers/actions.py::oauth_profile` |
 | Health check | `health.py` |
+| Interface translations | `locales/en.yaml`, `locales/lt.yaml` |
 
 ## Structure
 
@@ -34,6 +35,7 @@ extensions/flowsteward_example_showcase/
   ui/                         # declarative extension UI
   contracts/                  # Extension Contract v2 examples
   artifacts/                  # sole-source YAML artifact definitions
+  locales/                    # interface translations, one flat YAML per language
   scripts/smoke_check.py      # local executable smoke
   tests/                      # bundle-level tests
 ```
@@ -74,6 +76,42 @@ or through the dedicated workflow-binding API. Flow Steward materializes a
 minimal owner-marked registry anchor and persists the project binding in the same
 transaction. Disabling or uninstalling the extension remains dependency-safe and
 prevents new use without leaving an invalid project workflow reference.
+
+## Localization
+
+Every readable string the extension declares can be translated without
+touching the declaration. `locales/<language>.yaml` is a flat map from a key to
+its text; the user's language is used first, then `en`, then the text written
+in the declaration itself, so a missing key never leaves an empty label.
+
+```yaml
+# locales/lt.yaml
+page.configuration.title: Nustatymai
+component.connection_form.field.base_url.label: Bazinis URL
+component.connection_form.field.default_priority.option.low.label: Žemas
+op.test_external_request.display_name: Gauti išorinę būseną
+op.test_external_request.input.resource_id.display_name: Ištekliaus ID
+```
+
+Keys are derived from ids, never from positions or labels:
+
+| Text | Key |
+|---|---|
+| Page title / description | `page.<page_id>.title`, `page.<page_id>.description` |
+| Component title / description / content | `component.<component_id>.title` … |
+| Form field label / help / placeholder | `component.<component_id>.field.<field_id>.label` … |
+| Select option | `component.<component_id>.field.<field_id>.option.<value>.label` |
+| Repeater field | `component.<component_id>.field.<field_id>.field.<path>.label` |
+| Form section, buttons | `….section.<section_id>.title`, `….save_label`, `….test_label` |
+| Table column, row action, empty state | `….column.<key>.label`, `….row_action.<id>.label`, `….empty_state` |
+| Workflow operation and its inputs/outputs | `op.<operation_id>.display_name`, `op.<operation_id>.input.<name>.display_name` … |
+| Step form | `step.<operation_id>.section`, `step.<operation_id>.field.<name>.label` |
+| Connection type, query, category | `connection.<id>.display_name`, `query.<id>.display_name`, `category.<id>.display_name` |
+
+Keep `en.yaml` complete: validation warns about a key in `en.yaml` that no
+declaration uses and about a key in another language that `en.yaml` lacks.
+Values that are not language (URLs, sample ids) stay out of the other
+languages and fall back to English.
 
 ## Validate
 

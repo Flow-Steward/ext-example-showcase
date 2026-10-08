@@ -1,0 +1,140 @@
+# English texts of the Example Showcase extension: one flat key per readable string.
+# Keys follow docs/extension-authoring-agent-playbook.md "Localization"; a key
+# missing here falls back to English, then to the text in the declaration itself.
+ext.display_name: Example Showcase Extension
+ext.description: Reference extension bundle that demonstrates Flow Steward extension structure, UI, actions, queries, workflow triggers, external API/OAuth integration patterns, and demo workflow artifacts.
+ext.account_scope_description: Example Showcase is configured per project so config, secret refs, and workflow trigger examples stay project-scoped.
+connection.example_showcase_api.display_name: Example External API
+connection.example_showcase_api.description: Project-scoped connection for a third-party service used by the showcase extension.
+connection.example_showcase_oauth_account.display_name: Example OAuth Account
+connection.example_showcase_oauth_account.description: Mock third-party account authorized with OAuth2 Authorization Code + PKCE.
+op.test_external_request.display_name: Fetch External Status
+op.test_external_request.description: Demonstrates a safe external API request pattern with HTTPS and host allowlisting.
+op.test_external_request.input.resource_id.display_name: Resource ID
+op.test_external_request.input.resource_id.description: External resource identifier.
+op.test_external_request.input.perform_live_request.display_name: Perform live request
+op.test_external_request.input.perform_live_request.description: Defaults to false so the bundled example stays deterministic.
+op.test_external_request.output.status.display_name: Status
+op.test_external_request.output.external_request.display_name: Request summary
+category.external_api.display_name: External API
+op.send_review_notification.display_name: Send Review Notification
+op.send_review_notification.description: Demonstrates notification provider dispatch for human review channels.
+category.notifications.display_name: Notifications
+op.batch_score_records.display_name: Batch Score Records
+op.batch_score_records.description: Demonstrates a bulk operation contract with partial failure reporting.
+category.batch.display_name: Batch
+op.run_demo_tool.display_name: Run Demo Tool
+op.run_demo_tool.description: Demonstrates mapping a workflow connector step to a bundled deterministic tool artifact.
+category.demo_artifacts.display_name: Demo Artifacts
+op.invoke_tool.display_name: Invoke Demo Tool
+op.invoke_tool.description: Invokes a bundled demo tool and may publish an allowed run-window artifact.
+op.oauth_profile.display_name: Read OAuth Profile
+op.oauth_profile.description: Demonstrates runtime access-token injection for an OAuth-backed project connection.
+category.authentication.display_name: Authentication
+step.test_external_request.section: External status request
+step.test_external_request.field.resource_id.label: Resource ID
+step.test_external_request.field.resource_picker.label: Pick Resource
+step.test_external_request.field.perform_live_request.label: Perform Live Request
+step.send_review_notification.section: Review notification
+step.send_review_notification.field.message.label: Message
+step.send_review_notification.field.severity.label: Severity
+step.batch_score_records.section: Batch scoring
+step.batch_score_records.field.records.label: Records
+step.batch_score_records.field.batch_policy.label: Batch Policy
+step.run_demo_tool.section: Demo tool invocation
+step.run_demo_tool.field.tool_id.label: Tool
+step.run_demo_tool.field.payload.label: Payload
+step.oauth_profile.section: OAuth profile check
+query.list_example_resources.display_name: List Example Resources
+query.list_demo_workflows.display_name: List Demo Workflows
+query.list_demo_agents.display_name: List Demo Agents
+query.list_demo_tools.display_name: List Demo Tools
+page.overview.title: Overview
+page.overview.description: Extension runtime, health, callback, and capability summary.
+component.example_showcase_overview.title: Example Showcase Extension
+component.example_showcase_overview.content: |-
+  Reference bundle for Flow Steward extension authors.
+  It demonstrates a manifest v2 runtime bundle, project config and encrypted secrets, callback registration, workflow trigger metadata, action/query manifests, declarative UI pages, Contract v2 builder operations, and imported demo workflow/agent/tool artifacts.
+  The extension is synthetic by design: external API calls run in mock mode unless the project explicitly disables mock mode and allowlists an HTTPS host.
+component.provider_health.title: Runtime Health
+component.showcase_stats.title: Included Coverage
+component.callback_setup.title: Callback Registration
+component.callback_setup.description: Registers the generic /webhook/extensions/flowsteward_example_showcase/events callback for provider events.
+page.configuration.title: Configuration
+page.configuration.description: Project-scoped config, encrypted secrets, and external API request example.
+component.connection_form.title: Connection Settings
+component.connection_form.field.base_url.label: Base URL
+component.connection_form.field.base_url.placeholder: https://api.example.test
+component.connection_form.field.username.label: Username
+component.connection_form.field.tenant.label: Tenant
+component.connection_form.field.allowed_hosts.label: Allowed Hosts
+component.connection_form.field.allowed_hosts.help: External API calls are blocked unless the request host is in this list.
+component.connection_form.field.mock_mode.label: Mock Mode
+component.connection_form.field.default_priority.label: Default Priority
+component.connection_form.field.default_priority.option.low.label: Low
+component.connection_form.field.default_priority.option.medium.label: Medium
+component.connection_form.field.default_priority.option.high.label: High
+component.connection_form.field.notification_channel.label: Notification Channel
+component.connection_form.section.account.title: Provider Account
+component.connection_form.section.safety.title: Request Safety
+component.connection_form.save_label: Save Settings
+component.connection_form.test_label: Test Request
+component.secrets_form.title: Secrets
+component.secrets_form.field.password.label: Password
+component.secrets_form.field.password.help: Stored by Flow Steward as a project-scoped encrypted secret.
+component.secrets_form.field.api_token.label: API Token
+component.secrets_form.field.api_token.help: Optional bearer token used by external API calls.
+component.secrets_form.field.webhook_shared_secret.label: Webhook Shared Secret
+component.secrets_form.field.webhook_shared_secret.help: Provider-side example secret; callback registration issues its HMAC secret separately.
+component.secrets_form.save_label: Save Secrets
+component.external_request_form.title: External API Request Example
+component.external_request_form.description: Runs in mock mode by default. Disable mock mode and allowlist an HTTPS host before live calls.
+component.external_request_form.field.resource_id.label: Resource ID
+component.external_request_form.field.resource_id.placeholder: demo-resource-1
+component.external_request_form.field.perform_live_request.label: Perform Live Request
+component.external_request_form.test_label: Test External Request
+component.connection_status.title: Connection Status
+page.artifacts.title: Demo Artifacts
+page.artifacts.description: Bundled demo workflows, agents, and tools.
+component.artifacts_overview.title: Artifact Bundle
+component.artifacts_overview.content: |-
+  The `artifacts/` folder contains the demo workflow seed split into workflow, agent, skill, tool, dataset, saved-query, and connection manifests.
+  Use `extension-descriptor.yaml` to see how workflow/agent/skill/tool artifacts are referenced for descriptor import and release projection.
+component.workflows_grid.title: Workflow Artifacts
+component.workflows_grid.column.workflow_id.label: Workflow ID
+component.workflows_grid.column.display_name.label: Name
+component.workflows_grid.column.coverage.label: Coverage
+component.workflows_grid.empty_state: No workflows
+component.workflows_grid.empty_state_description: The workflow artifact directory is empty.
+component.agents_grid.title: Agent Artifacts
+component.agents_grid.column.agent_id.label: Agent ID
+component.agents_grid.column.display_name.label: Name
+component.agents_grid.column.base_skill.label: Base Skill
+component.tools_grid.title: Tool Artifacts
+component.tools_grid.column.tool_id.label: Tool ID
+component.tools_grid.column.display_name.label: Name
+component.tools_grid.column.coverage.label: Coverage
+component.tools_grid.row_action.run_demo_tool.label: Run
+page.operations.title: Operations
+page.operations.description: Contract v2 operations and builder-facing examples.
+component.operations_overview.title: Contract v2 Operations
+component.operations_overview.content: Contract v2 is the builder-facing contract for extension-provided operations. This bundle includes source, action, human-channel, bulk-action, resource query, step UI, event binding, and artifact policy examples.
+component.operations_grid.title: Operation Contracts
+component.operations_grid.column.operation_id.label: Operation ID
+component.operations_grid.column.operation_kind.label: Kind
+component.batch_score_form.title: Batch Action Example
+component.batch_score_form.field.records.label: Records
+component.batch_score_form.field.records.field.id.label: Record ID
+component.batch_score_form.field.records.field.tier.label: Tier
+component.batch_score_form.field.records.field.active.label: Active
+component.batch_score_form.test_label: Score Records
+component.review_notification_form.title: Notification Example
+component.review_notification_form.field.message.label: Message
+component.review_notification_form.field.message.placeholder: Review requested for the launch plan.
+component.review_notification_form.field.severity.label: Severity
+component.review_notification_form.field.severity.option.info.label: Info
+component.review_notification_form.field.severity.option.warning.label: Warning
+component.review_notification_form.field.severity.option.critical.label: Critical
+component.review_notification_form.test_label: Send Notification
+component.batch_score_form.field.records.field.tier.option.standard.label: Standard
+component.batch_score_form.field.records.field.tier.option.priority.label: Priority

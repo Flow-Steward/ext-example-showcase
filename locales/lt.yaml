@@ -1,0 +1,138 @@
+# Lithuanian texts of the Example Showcase extension: one flat key per readable string.
+# Keys follow docs/extension-authoring-agent-playbook.md "Localization"; a key
+# missing here falls back to English, then to the text in the declaration itself.
+ext.display_name: Pavyzdinis demonstracinis plėtinys
+ext.description: Pavyzdinis plėtinio paketas, rodantis Flow Steward plėtinio struktūrą, sąsają, veiksmus, užklausas, darbo eigų paleidiklius, išorinių API ir OAuth integracijos modelius bei demonstracinius darbo eigų artefaktus.
+ext.account_scope_description: Demonstracinis plėtinys konfigūruojamas kiekvienam projektui atskirai, todėl nustatymai, slaptųjų duomenų nuorodos ir darbo eigų paleidiklių pavyzdžiai lieka projekto ribose.
+connection.example_showcase_api.display_name: Pavyzdinė išorinė API
+connection.example_showcase_api.description: Projekto ryšys su trečiosios šalies paslauga, kurią naudoja demonstracinis plėtinys.
+connection.example_showcase_oauth_account.display_name: Pavyzdinė OAuth paskyra
+connection.example_showcase_oauth_account.description: Imituota trečiosios šalies paskyra, autorizuota per OAuth2 Authorization Code + PKCE.
+op.test_external_request.display_name: Gauti išorinę būseną
+op.test_external_request.description: Rodo saugų išorinės API užklausos modelį su HTTPS ir leidžiamų serverių sąrašu.
+op.test_external_request.input.resource_id.display_name: Ištekliaus ID
+op.test_external_request.input.resource_id.description: Išorinio ištekliaus identifikatorius.
+op.test_external_request.input.perform_live_request.display_name: Atlikti tikrą užklausą
+op.test_external_request.input.perform_live_request.description: Numatytoji reikšmė – ne, kad pridėtas pavyzdys veiktų nuspėjamai.
+op.test_external_request.output.status.display_name: Būsena
+op.test_external_request.output.external_request.display_name: Užklausos santrauka
+category.external_api.display_name: Išorinė API
+op.send_review_notification.display_name: Siųsti peržiūros pranešimą
+op.send_review_notification.description: Rodo pranešimų teikėjo siuntimą žmogaus peržiūros kanalams.
+category.notifications.display_name: Pranešimai
+op.batch_score_records.display_name: Įvertinti įrašus paketu
+op.batch_score_records.description: Rodo masinės operacijos sutartį su daliniu klaidų pranešimu.
+category.batch.display_name: Paketinės operacijos
+op.run_demo_tool.display_name: Paleisti demonstracinį įrankį
+op.run_demo_tool.description: Rodo, kaip darbo eigos jungties žingsnis susiejamas su pridėtu deterministiniu įrankio artefaktu.
+category.demo_artifacts.display_name: Demonstraciniai artefaktai
+op.invoke_tool.display_name: Iškviesti demonstracinį įrankį
+op.invoke_tool.description: Iškviečia pridėtą demonstracinį įrankį ir gali paskelbti leidžiamą vykdymo lango artefaktą.
+op.oauth_profile.display_name: Skaityti OAuth profilį
+op.oauth_profile.description: Rodo prieigos rakto įterpimą vykdymo metu OAuth pagrįstam projekto ryšiui.
+category.authentication.display_name: Autentifikacija
+step.test_external_request.section: Išorinės būsenos užklausa
+step.test_external_request.field.resource_id.label: Ištekliaus ID
+step.test_external_request.field.resource_picker.label: Pasirinkti išteklių
+step.test_external_request.field.perform_live_request.label: Atlikti tikrą užklausą
+step.send_review_notification.section: Peržiūros pranešimas
+step.send_review_notification.field.message.label: Žinutė
+step.send_review_notification.field.severity.label: Svarba
+step.batch_score_records.section: Paketinis vertinimas
+step.batch_score_records.field.records.label: Įrašai
+step.batch_score_records.field.batch_policy.label: Paketo politika
+step.run_demo_tool.section: Demonstracinio įrankio iškvietimas
+step.run_demo_tool.field.tool_id.label: Įrankis
+step.run_demo_tool.field.payload.label: Turinys
+step.oauth_profile.section: OAuth profilio patikra
+query.list_example_resources.display_name: Pavyzdinių išteklių sąrašas
+query.list_demo_workflows.display_name: Demonstracinių darbo eigų sąrašas
+query.list_demo_agents.display_name: Demonstracinių agentų sąrašas
+query.list_demo_tools.display_name: Demonstracinių įrankių sąrašas
+page.overview.title: Apžvalga
+page.overview.description: Plėtinio vykdymo aplinkos, būklės, atgalinio iškvietimo ir galimybių santrauka.
+component.example_showcase_overview.title: Pavyzdinis demonstracinis plėtinys
+component.example_showcase_overview.content: |-
+  Pavyzdinis paketas Flow Steward plėtinių autoriams.
+  Jis rodo manifest v2 vykdymo paketą, projekto nustatymus ir šifruojamus slaptuosius duomenis, atgalinio iškvietimo registravimą, darbo eigų paleidiklių metaduomenis, veiksmų ir užklausų manifestus, deklaratyvius sąsajos puslapius, Contract v2 kūrimo operacijas ir importuojamus demonstracinių darbo eigų, agentų bei įrankių artefaktus.
+  Plėtinys sąmoningai sintetinis: išorinės API užklausos vykdomos imitacijos režimu, nebent projektas aiškiai išjungia imitacijos režimą ir įtraukia HTTPS serverį į leidžiamų sąrašą.
+component.provider_health.title: Vykdymo būklė
+component.showcase_stats.title: Kas įtraukta
+component.callback_setup.title: Atgalinio iškvietimo registravimas
+component.callback_setup.description: Užregistruoja bendrą /webhook/extensions/flowsteward_example_showcase/events atgalinį iškvietimą teikėjo įvykiams.
+page.configuration.title: Nustatymai
+page.configuration.description: Projekto nustatymai, šifruojami slaptieji duomenys ir išorinės API užklausos pavyzdys.
+component.connection_form.title: Ryšio nustatymai
+component.connection_form.field.base_url.label: Bazinis URL
+component.connection_form.field.username.label: Naudotojo vardas
+component.connection_form.field.tenant.label: Nuomininkas
+component.connection_form.field.allowed_hosts.label: Leidžiami serveriai
+component.connection_form.field.allowed_hosts.help: Išorinės API užklausos blokuojamos, jei užklausos serverio nėra šiame sąraše.
+component.connection_form.field.mock_mode.label: Imitacijos režimas
+component.connection_form.field.default_priority.label: Numatytasis prioritetas
+component.connection_form.field.default_priority.option.low.label: Žemas
+component.connection_form.field.default_priority.option.medium.label: Vidutinis
+component.connection_form.field.default_priority.option.high.label: Aukštas
+component.connection_form.field.notification_channel.label: Pranešimų kanalas
+component.connection_form.section.account.title: Teikėjo paskyra
+component.connection_form.section.safety.title: Užklausų saugumas
+component.connection_form.save_label: Išsaugoti nustatymus
+component.connection_form.test_label: Išbandyti užklausą
+component.secrets_form.title: Slaptieji duomenys
+component.secrets_form.field.password.label: Slaptažodis
+component.secrets_form.field.password.help: Flow Steward saugo jį kaip projekto šifruojamą slaptą reikšmę.
+component.secrets_form.field.api_token.label: API raktas
+component.secrets_form.field.api_token.help: Neprivalomas bearer raktas, naudojamas išorinės API užklausoms.
+component.secrets_form.field.webhook_shared_secret.label: Webhook bendra slapta reikšmė
+component.secrets_form.field.webhook_shared_secret.help: Pavyzdinė teikėjo pusės slapta reikšmė; atgalinio iškvietimo registracija HMAC slaptą reikšmę išduoda atskirai.
+component.secrets_form.save_label: Išsaugoti slaptuosius duomenis
+component.external_request_form.title: Išorinės API užklausos pavyzdys
+component.external_request_form.description: Pagal numatymą veikia imitacijos režimu. Prieš tikras užklausas išjunkite imitacijos režimą ir įtraukite HTTPS serverį į leidžiamų sąrašą.
+component.external_request_form.field.resource_id.label: Ištekliaus ID
+component.external_request_form.field.perform_live_request.label: Atlikti tikrą užklausą
+component.external_request_form.test_label: Išbandyti išorinę užklausą
+component.connection_status.title: Ryšio būsena
+page.artifacts.title: Demonstraciniai artefaktai
+page.artifacts.description: Pridėtos demonstracinės darbo eigos, agentai ir įrankiai.
+component.artifacts_overview.title: Artefaktų paketas
+component.artifacts_overview.content: |-
+  Aplanke `artifacts/` yra demonstracinės darbo eigos pradiniai duomenys, išskaidyti į darbo eigos, agento, įgūdžio, įrankio, duomenų rinkinio, išsaugotos užklausos ir ryšio manifestus.
+  Faile `extension-descriptor.yaml` matyti, kaip darbo eigų, agentų, įgūdžių ir įrankių artefaktai nurodomi aprašo importui ir leidimo projekcijai.
+component.workflows_grid.title: Darbo eigų artefaktai
+component.workflows_grid.column.workflow_id.label: Darbo eigos ID
+component.workflows_grid.column.display_name.label: Pavadinimas
+component.workflows_grid.column.coverage.label: Aprėptis
+component.workflows_grid.empty_state: Darbo eigų nėra
+component.workflows_grid.empty_state_description: Darbo eigų artefaktų aplankas tuščias.
+component.agents_grid.title: Agentų artefaktai
+component.agents_grid.column.agent_id.label: Agento ID
+component.agents_grid.column.display_name.label: Pavadinimas
+component.agents_grid.column.base_skill.label: Bazinis įgūdis
+component.tools_grid.title: Įrankių artefaktai
+component.tools_grid.column.tool_id.label: Įrankio ID
+component.tools_grid.column.display_name.label: Pavadinimas
+component.tools_grid.column.coverage.label: Aprėptis
+component.tools_grid.row_action.run_demo_tool.label: Paleisti
+page.operations.title: Operacijos
+page.operations.description: Contract v2 operacijos ir pavyzdžiai darbo eigų kūrimui.
+component.operations_overview.title: Contract v2 operacijos
+component.operations_overview.content: Contract v2 – tai sutartis, pagal kurią plėtinio operacijos rodomos darbo eigų kūrimo įrankyje. Šiame pakete yra šaltinio, veiksmo, žmogaus kanalo, masinio veiksmo, išteklių užklausos, žingsnio sąsajos, įvykių susiejimo ir artefaktų politikos pavyzdžiai.
+component.operations_grid.title: Operacijų sutartys
+component.operations_grid.column.operation_id.label: Operacijos ID
+component.operations_grid.column.operation_kind.label: Tipas
+component.batch_score_form.title: Paketinio veiksmo pavyzdys
+component.batch_score_form.field.records.label: Įrašai
+component.batch_score_form.field.records.field.id.label: Įrašo ID
+component.batch_score_form.field.records.field.tier.label: Lygis
+component.batch_score_form.field.records.field.active.label: Aktyvus
+component.batch_score_form.test_label: Įvertinti įrašus
+component.review_notification_form.title: Pranešimo pavyzdys
+component.review_notification_form.field.message.label: Žinutė
+component.review_notification_form.field.message.placeholder: Paleidimo planui reikalinga peržiūra.
+component.review_notification_form.field.severity.label: Svarba
+component.review_notification_form.field.severity.option.info.label: Informacija
+component.review_notification_form.field.severity.option.warning.label: Įspėjimas
+component.review_notification_form.field.severity.option.critical.label: Kritinė
+component.review_notification_form.test_label: Siųsti pranešimą
+component.batch_score_form.field.records.field.tier.option.standard.label: Standartinis
+component.batch_score_form.field.records.field.tier.option.priority.label: Prioritetinis
