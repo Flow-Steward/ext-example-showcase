@@ -2,7 +2,7 @@ manifest_version: 2
 lifecycle: {data_schema_version: 1, data_migrations: []}
 extension_id: flowsteward.example-showcase
 kind: tool_provider
-version: 1.0.2
+version: 1.0.3
 display_name: Example Showcase Extension
 description: Reference extension bundle that demonstrates Flow Steward extension structure, UI, actions, queries, workflow triggers, external API/OAuth integration patterns, and demo workflow artifacts.
 vendor:
@@ -25,6 +25,13 @@ features:
 required_scopes:
 - extension:invoke
 - read:projects
+# Where the extension connects: the example API's default host, or the base
+# URL a project sets on its connection.
+egress:
+  hosts:
+  - api.example.test
+  connection_fields:
+  - example_showcase_api.base_url
 schemas:
   config: schemas/config.schema.yaml
   secrets: schemas/secrets.schema.yaml
