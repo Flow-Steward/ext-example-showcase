@@ -1,5 +1,5 @@
 workflow_id: demo_incoming_webhook_router
-version: 1.0.0
+version: 1.1.0
 display_name: 'Demo: Incoming Webhook Router'
 description: Designed for Incoming Webhook/Post demos. It copies mapped webhook fields into workflow state
   and routes invoice, approval, or generic events through separate branches so teams can test JSON, form,
@@ -8,6 +8,66 @@ enabled: true
 trigger:
   confidence_threshold: 0.0
 settings:
+  execution_graph:
+    schema_version: 1
+    entry: {kind: step, id: copy_webhook_inputs}
+    edges:
+    - source: {kind: step, id: copy_webhook_inputs}
+      outcome: {name: success}
+      target: {kind: step, id: measure_event_type_length}
+      rework: false
+    - source: {kind: step, id: measure_event_type_length}
+      outcome: {name: success}
+      target: {kind: step, id: event_type_switch}
+      rework: false
+    - source: {kind: step, id: event_type_switch}
+      outcome: {name: case, case_id: invoice_created}
+      target: {kind: step, id: set_invoice_summary}
+      rework: false
+    - source: {kind: step, id: event_type_switch}
+      outcome: {name: case, case_id: approval_changed}
+      target: {kind: step, id: set_approval_summary}
+      rework: false
+    - source: {kind: step, id: event_type_switch}
+      outcome: {name: default}
+      target: {kind: step, id: set_generic_summary}
+      rework: false
+    - source: {kind: step, id: set_invoice_summary}
+      outcome: {name: success}
+      target: {kind: step, id: invoice_continue}
+      rework: false
+    - source: {kind: step, id: invoice_continue}
+      outcome: {name: 'true'}
+      target: {kind: step, id: webhook_done}
+      rework: false
+    - source: {kind: step, id: invoice_continue}
+      outcome: {name: 'false'}
+      target: {kind: step, id: webhook_done}
+      rework: false
+    - source: {kind: step, id: set_approval_summary}
+      outcome: {name: success}
+      target: {kind: step, id: approval_continue}
+      rework: false
+    - source: {kind: step, id: approval_continue}
+      outcome: {name: 'true'}
+      target: {kind: step, id: webhook_done}
+      rework: false
+    - source: {kind: step, id: approval_continue}
+      outcome: {name: 'false'}
+      target: {kind: step, id: webhook_done}
+      rework: false
+    - source: {kind: step, id: set_generic_summary}
+      outcome: {name: success}
+      target: {kind: step, id: generic_continue}
+      rework: false
+    - source: {kind: step, id: generic_continue}
+      outcome: {name: 'true'}
+      target: {kind: step, id: webhook_done}
+      rework: false
+    - source: {kind: step, id: generic_continue}
+      outcome: {name: 'false'}
+      target: {kind: step, id: webhook_done}
+      rework: false
   traits:
     demo: true
     incoming_webhook: true
@@ -87,149 +147,116 @@ tags:
 - workflow-demo
 - incoming-webhook
 - routing
-phases:
-- phase_id: capture_payload
-  phase_kind: start
-  display_name: Capture Payload
-  gate:
-    type: none
-  steps:
-  - step_id: copy_webhook_inputs
-    display_name: Copy webhook inputs
-    step_kind: set_variable
-    override:
-      set_variable:
-        assignments:
-          state.webhook_payload.email:
-            source: state.inputs.email
-          state.webhook_payload.event_type:
-            source: state.inputs.event_type
-          state.webhook_payload.amount:
-            source: state.inputs.amount
-          state.webhook_payload.approved:
-            source: state.inputs.approved
-          state.webhook_payload.source:
-            source: state.inputs.source
-          state.webhook_payload.payload_text:
-            source: state.inputs.payload_text
-          state.webhook_payload.files:
-            source: state.inputs.files
-  - step_id: measure_event_type_length
-    display_name: Measure event type length
-    step_kind: connector
-    connector_id: connector.std.text
-    override:
-      connector:
-        function_name: length
-        input_mapping:
-          value: state.inputs.event_type
-        output_mapping:
-          result: state.webhook_payload.event_type_length
-    input_mapping_jsonb:
-      value: state.inputs.event_type
-    output_mapping_jsonb:
-      result: state.webhook_payload.event_type_length
-- phase_id: route_event
-  display_name: Route Event
-  gate:
-    type: none
-  steps:
-  - step_id: event_type_switch
-    display_name: Route by event type
-    step_kind: switch
-    override:
-      switch:
-        selector: state.inputs.event_type
-        cases:
-          invoice.created: invoice_event
-          approval.changed: approval_event
-        default: generic_event
-- phase_id: invoice_event
-  display_name: Invoice Event
-  gate:
-    type: none
-  steps:
-  - step_id: set_invoice_summary
-    display_name: Capture invoice summary
-    step_kind: set_variable
-    override:
-      set_variable:
-        assignments:
-          state.webhook_summary.route: invoice.created
-          state.webhook_summary.email:
-            source: state.webhook_payload.email
-          state.webhook_summary.amount:
-            source: state.webhook_payload.amount
-          state.webhook_summary.source:
-            source: state.webhook_payload.source
-  - step_id: invoice_continue
-    display_name: Continue to acknowledge
-    step_kind: if
-    override:
-      if:
-        condition: state.webhook_summary
-        on_true: acknowledge_event
-        on_false: acknowledge_event
-- phase_id: approval_event
-  display_name: Approval Event
-  gate:
-    type: none
-  steps:
-  - step_id: set_approval_summary
-    display_name: Capture approval summary
-    step_kind: set_variable
-    override:
-      set_variable:
-        assignments:
-          state.webhook_summary.route: approval.changed
-          state.webhook_summary.email:
-            source: state.webhook_payload.email
-          state.webhook_summary.approved:
-            source: state.webhook_payload.approved
-          state.webhook_summary.source:
-            source: state.webhook_payload.source
-  - step_id: approval_continue
-    display_name: Continue to acknowledge
-    step_kind: if
-    override:
-      if:
-        condition: state.webhook_summary
-        on_true: acknowledge_event
-        on_false: acknowledge_event
-- phase_id: generic_event
-  display_name: Generic Event
-  gate:
-    type: none
-  steps:
-  - step_id: set_generic_summary
-    display_name: Capture generic summary
-    step_kind: set_variable
-    override:
-      set_variable:
-        assignments:
-          state.webhook_summary.route: generic
-          state.webhook_summary.email:
-            source: state.webhook_payload.email
-          state.webhook_summary.payload_text:
-            source: state.webhook_payload.payload_text
-          state.webhook_summary.source:
-            source: state.webhook_payload.source
-  - step_id: generic_continue
-    display_name: Continue to acknowledge
-    step_kind: if
-    override:
-      if:
-        condition: state.webhook_summary
-        on_true: acknowledge_event
-        on_false: acknowledge_event
-- phase_id: acknowledge_event
-  display_name: Acknowledge Event
-  gate:
-    type: none
-  steps:
-  - step_id: webhook_done
-    display_name: Finish webhook routing
-    step_kind: stop_success
-    override:
-      stop_success:
-        message: Webhook demo completed for the routed event type.
+steps:
+- step_id: copy_webhook_inputs
+  display_name: Copy webhook inputs
+  step_kind: set_variable
+  override:
+    set_variable:
+      assignments:
+        state.webhook_payload.email:
+          source: state.inputs.email
+        state.webhook_payload.event_type:
+          source: state.inputs.event_type
+        state.webhook_payload.amount:
+          source: state.inputs.amount
+        state.webhook_payload.approved:
+          source: state.inputs.approved
+        state.webhook_payload.source:
+          source: state.inputs.source
+        state.webhook_payload.payload_text:
+          source: state.inputs.payload_text
+        state.webhook_payload.files:
+          source: state.inputs.files
+- step_id: measure_event_type_length
+  display_name: Measure event type length
+  step_kind: connector
+  connector_id: connector.std.text
+  override:
+    connector:
+      function_name: length
+      input_mapping:
+        value: state.inputs.event_type
+      output_mapping:
+        result: state.webhook_payload.event_type_length
+  input_mapping_jsonb:
+    value: state.inputs.event_type
+  output_mapping_jsonb:
+    result: state.webhook_payload.event_type_length
+- step_id: event_type_switch
+  display_name: Route by event type
+  step_kind: switch
+  override:
+    switch:
+      selector: state.inputs.event_type
+      cases:
+      - case_id: invoice_created
+        when: invoice.created
+        label: Invoice created
+      - case_id: approval_changed
+        when: approval.changed
+        label: Approval changed
+- step_id: set_invoice_summary
+  display_name: Capture invoice summary
+  step_kind: set_variable
+  override:
+    set_variable:
+      assignments:
+        state.webhook_summary.route: invoice.created
+        state.webhook_summary.email:
+          source: state.webhook_payload.email
+        state.webhook_summary.amount:
+          source: state.webhook_payload.amount
+        state.webhook_summary.source:
+          source: state.webhook_payload.source
+- step_id: invoice_continue
+  display_name: Continue to acknowledge
+  step_kind: if
+  override:
+    if:
+      condition: state.webhook_summary
+- step_id: set_approval_summary
+  display_name: Capture approval summary
+  step_kind: set_variable
+  override:
+    set_variable:
+      assignments:
+        state.webhook_summary.route: approval.changed
+        state.webhook_summary.email:
+          source: state.webhook_payload.email
+        state.webhook_summary.approved:
+          source: state.webhook_payload.approved
+        state.webhook_summary.source:
+          source: state.webhook_payload.source
+- step_id: approval_continue
+  display_name: Continue to acknowledge
+  step_kind: if
+  override:
+    if:
+      condition: state.webhook_summary
+- step_id: set_generic_summary
+  display_name: Capture generic summary
+  step_kind: set_variable
+  override:
+    set_variable:
+      assignments:
+        state.webhook_summary.route: generic
+        state.webhook_summary.email:
+          source: state.webhook_payload.email
+        state.webhook_summary.payload_text:
+          source: state.webhook_payload.payload_text
+        state.webhook_summary.source:
+          source: state.webhook_payload.source
+- step_id: generic_continue
+  display_name: Continue to acknowledge
+  step_kind: if
+  override:
+    if:
+      condition: state.webhook_summary
+- step_id: webhook_done
+  display_name: Finish webhook routing
+  step_kind: stop_success
+  override:
+    stop_success:
+      message: Webhook demo completed for the routed event type.
+groups: []

@@ -1,5 +1,5 @@
 workflow_id: demo_weather_city_brief
-version: 1.0.0
+version: 1.1.0
 display_name: 'Demo: Weather City Brief'
 description: Uses if, switch, http_request, connector, and stop_success to fetch a no-key Open-Meteo forecast
   for Berlin, Vilnius, or London.
@@ -7,6 +7,82 @@ enabled: true
 trigger:
   confidence_threshold: 0.0
 settings:
+  execution_graph:
+    schema_version: 1
+    entry: {kind: step, id: has_city}
+    edges:
+    - source: {kind: step, id: has_city}
+      outcome: {name: 'true'}
+      target: {kind: step, id: city_switch}
+      rework: false
+    - source: {kind: step, id: has_city}
+      outcome: {name: 'false'}
+      target: {kind: step, id: set_default_city}
+      rework: false
+    - source: {kind: step, id: set_default_city}
+      outcome: {name: success}
+      target: {kind: step, id: city_switch}
+      rework: false
+    - source: {kind: step, id: city_switch}
+      outcome: {name: case, case_id: berlin}
+      target: {kind: step, id: set_berlin}
+      rework: false
+    - source: {kind: step, id: city_switch}
+      outcome: {name: case, case_id: vilnius}
+      target: {kind: step, id: set_vilnius}
+      rework: false
+    - source: {kind: step, id: city_switch}
+      outcome: {name: case, case_id: london}
+      target: {kind: step, id: set_london}
+      rework: false
+    - source: {kind: step, id: city_switch}
+      outcome: {name: default}
+      target: {kind: step, id: set_berlin}
+      rework: false
+    - source: {kind: step, id: set_berlin}
+      outcome: {name: success}
+      target: {kind: step, id: berlin_continue}
+      rework: false
+    - source: {kind: step, id: berlin_continue}
+      outcome: {name: 'true'}
+      target: {kind: step, id: open_meteo_request}
+      rework: false
+    - source: {kind: step, id: berlin_continue}
+      outcome: {name: 'false'}
+      target: {kind: step, id: open_meteo_request}
+      rework: false
+    - source: {kind: step, id: set_vilnius}
+      outcome: {name: success}
+      target: {kind: step, id: vilnius_continue}
+      rework: false
+    - source: {kind: step, id: vilnius_continue}
+      outcome: {name: 'true'}
+      target: {kind: step, id: open_meteo_request}
+      rework: false
+    - source: {kind: step, id: vilnius_continue}
+      outcome: {name: 'false'}
+      target: {kind: step, id: open_meteo_request}
+      rework: false
+    - source: {kind: step, id: set_london}
+      outcome: {name: success}
+      target: {kind: step, id: london_continue}
+      rework: false
+    - source: {kind: step, id: london_continue}
+      outcome: {name: 'true'}
+      target: {kind: step, id: open_meteo_request}
+      rework: false
+    - source: {kind: step, id: london_continue}
+      outcome: {name: 'false'}
+      target: {kind: step, id: open_meteo_request}
+      rework: false
+    - source: {kind: step, id: open_meteo_request}
+      outcome: {name: success}
+      target: {kind: step, id: format_weather_summary}
+      rework: false
+    - source: {kind: step, id: format_weather_summary}
+      outcome: {name: success}
+      target: {kind: step, id: weather_done}
+      rework: false
   traits:
     demo: true
   policies:
@@ -58,176 +134,133 @@ tags:
 - workflow-demo
 - weather
 - http-request
-phases:
-- phase_id: choose_city
-  phase_kind: start
-  display_name: Choose City
-  gate:
-    type: none
-  steps:
-  - step_id: has_city
-    display_name: Check city input
-    step_kind: if
-    override:
-      if:
-        condition: state.inputs.city
-        on_true: select_city
-        on_false: default_city
-- phase_id: default_city
-  display_name: Default City
-  gate:
-    type: none
-  steps:
-  - step_id: set_default_city
-    display_name: Default to Berlin
-    step_kind: set_variable
-    override:
-      set_variable:
-        assignments:
-          state.inputs.city: Berlin
-- phase_id: select_city
-  display_name: Select Coordinates
-  gate:
-    type: none
-  steps:
-  - step_id: city_switch
-    display_name: Route by city
-    step_kind: switch
-    override:
-      switch:
-        selector: state.inputs.city
-        cases:
-          Berlin: berlin_coords
-          Vilnius: vilnius_coords
-          London: london_coords
-        default: berlin_coords
-- phase_id: berlin_coords
-  display_name: Berlin Coordinates
-  required_outputs:
-  - weather_query
-  gate:
-    type: none
-  steps:
-  - step_id: set_berlin
-    display_name: Set Berlin coordinates
-    step_kind: set_variable
-    override:
-      set_variable:
-        assignments:
-          state.weather_query:
-            city: Berlin
-            latitude: 52.52
-            longitude: 13.41
-  - step_id: berlin_continue
-    display_name: Continue to request
-    step_kind: if
-    override:
-      if:
-        condition: state.weather_query
-        on_true: fetch_weather
-        on_false: fetch_weather
-- phase_id: vilnius_coords
-  display_name: Vilnius Coordinates
-  required_outputs:
-  - weather_query
-  gate:
-    type: none
-  steps:
-  - step_id: set_vilnius
-    display_name: Set Vilnius coordinates
-    step_kind: set_variable
-    override:
-      set_variable:
-        assignments:
-          state.weather_query:
-            city: Vilnius
-            latitude: 54.69
-            longitude: 25.28
-  - step_id: vilnius_continue
-    display_name: Continue to request
-    step_kind: if
-    override:
-      if:
-        condition: state.weather_query
-        on_true: fetch_weather
-        on_false: fetch_weather
-- phase_id: london_coords
-  display_name: London Coordinates
-  required_outputs:
-  - weather_query
-  gate:
-    type: none
-  steps:
-  - step_id: set_london
-    display_name: Set London coordinates
-    step_kind: set_variable
-    override:
-      set_variable:
-        assignments:
-          state.weather_query:
-            city: London
-            latitude: 51.5072
-            longitude: -0.1276
-  - step_id: london_continue
-    display_name: Continue to request
-    step_kind: if
-    override:
-      if:
-        condition: state.weather_query
-        on_true: fetch_weather
-        on_false: fetch_weather
-- phase_id: fetch_weather
-  display_name: Fetch Weather
-  required_outputs:
-  - weather_raw
-  gate:
-    type: none
-  steps:
-  - step_id: open_meteo_request
-    display_name: Call Open-Meteo
-    step_kind: http_request
-    override:
-      http_request:
-        url: https://api.open-meteo.com/v1/forecast
-        method: GET
-        auth_mode: none
-        query_params:
-          latitude: '{{ state.weather_query.latitude }}'
-          longitude: '{{ state.weather_query.longitude }}'
-          current: temperature_2m,wind_speed_10m,weather_code
-        response_target: state.weather_raw
-        timeout_seconds: 20
-        expected_statuses:
-        - 200
-- phase_id: format_weather
-  display_name: Format Weather Brief
-  required_outputs:
-  - weather_summary
-  gate:
-    type: none
-  steps:
-  - step_id: format_weather_summary
-    display_name: Format weather summary
-    step_kind: connector
-    connector_id: connector.demo_weather_tools
-    override:
-      connector:
-        function_name: demo_weather_brief
-    input_mapping_jsonb:
-      city: state.weather_query.city
-      weather_response: state.weather_raw
-    output_mapping_jsonb:
-      weather_summary: state.weather_summary
-      condition: state.weather_condition
-      temperature: state.weather_temperature
-- phase_id: complete
-  display_name: Complete
-  gate:
-    type: none
-  steps:
-  - step_id: weather_done
-    display_name: Finish weather demo
-    step_kind: stop_success
-    override:
-      stop_success:
-        message: Weather brief completed.
+steps:
+- step_id: has_city
+  display_name: Check city input
+  step_kind: if
+  override:
+    if:
+      condition: state.inputs.city
+- step_id: set_default_city
+  display_name: Default to Berlin
+  step_kind: set_variable
+  override:
+    set_variable:
+      assignments:
+        state.inputs.city: Berlin
+- step_id: city_switch
+  display_name: Route by city
+  step_kind: switch
+  override:
+    switch:
+      selector: state.inputs.city
+      cases:
+      - case_id: berlin
+        when: Berlin
+        label: Berlin
+      - case_id: vilnius
+        when: Vilnius
+        label: Vilnius
+      - case_id: london
+        when: London
+        label: London
+- step_id: set_berlin
+  display_name: Set Berlin coordinates
+  step_kind: set_variable
+  override:
+    set_variable:
+      assignments:
+        state.weather_query:
+          city: Berlin
+          latitude: 52.52
+          longitude: 13.41
+  boundary_contract:
+    exit:
+    - weather_query
+- step_id: berlin_continue
+  display_name: Continue to request
+  step_kind: if
+  override:
+    if:
+      condition: state.weather_query
+- step_id: set_vilnius
+  display_name: Set Vilnius coordinates
+  step_kind: set_variable
+  override:
+    set_variable:
+      assignments:
+        state.weather_query:
+          city: Vilnius
+          latitude: 54.69
+          longitude: 25.28
+  boundary_contract:
+    exit:
+    - weather_query
+- step_id: vilnius_continue
+  display_name: Continue to request
+  step_kind: if
+  override:
+    if:
+      condition: state.weather_query
+- step_id: set_london
+  display_name: Set London coordinates
+  step_kind: set_variable
+  override:
+    set_variable:
+      assignments:
+        state.weather_query:
+          city: London
+          latitude: 51.5072
+          longitude: -0.1276
+  boundary_contract:
+    exit:
+    - weather_query
+- step_id: london_continue
+  display_name: Continue to request
+  step_kind: if
+  override:
+    if:
+      condition: state.weather_query
+- step_id: open_meteo_request
+  display_name: Call Open-Meteo
+  step_kind: http_request
+  override:
+    http_request:
+      url: https://api.open-meteo.com/v1/forecast
+      method: GET
+      auth_mode: none
+      query_params:
+        latitude: '{{ state.weather_query.latitude }}'
+        longitude: '{{ state.weather_query.longitude }}'
+        current: temperature_2m,wind_speed_10m,weather_code
+      response_target: state.weather_raw
+      timeout_seconds: 20
+      expected_statuses:
+      - 200
+  boundary_contract:
+    exit:
+    - weather_raw
+- step_id: format_weather_summary
+  display_name: Format weather summary
+  step_kind: connector
+  connector_id: connector.demo_weather_tools
+  override:
+    connector:
+      function_name: demo_weather_brief
+  input_mapping_jsonb:
+    city: state.weather_query.city
+    weather_response: state.weather_raw
+  output_mapping_jsonb:
+    weather_summary: state.weather_summary
+    condition: state.weather_condition
+    temperature: state.weather_temperature
+  boundary_contract:
+    exit:
+    - weather_summary
+- step_id: weather_done
+  display_name: Finish weather demo
+  step_kind: stop_success
+  override:
+    stop_success:
+      message: Weather brief completed.
+groups: []

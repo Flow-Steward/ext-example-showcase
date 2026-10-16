@@ -1,5 +1,5 @@
 workflow_id: demo_dataset_open_orders
-version: 1.0.0
+version: 1.1.0
 display_name: 'Demo: Dataset Open Orders'
 description: Runs a saved dataset query against the bundled sales fixture and then reuses the returned
   rows in a follow-up step.
@@ -7,6 +7,18 @@ enabled: true
 trigger:
   confidence_threshold: 0.0
 settings:
+  execution_graph:
+    schema_version: 1
+    entry: {kind: step, id: load_open_orders}
+    edges:
+    - source: {kind: step, id: load_open_orders}
+      outcome: {name: success}
+      target: {kind: step, id: count_open_orders}
+      rework: false
+    - source: {kind: step, id: count_open_orders}
+      outcome: {name: success}
+      target: {kind: step, id: dataset_demo_done}
+      rework: false
   traits:
     demo: true
     dataset_demo: true
@@ -62,46 +74,31 @@ dependencies:
   - extension_id: flowsteward.toolbox-dataset-connector
     required: true
     reason: This workflow executes the projected dataset through Toolbox.
-phases:
-- phase_id: load_demo_dataset
-  phase_kind: start
-  display_name: Run Saved Query
-  gate:
-    type: none
-  steps:
-  - step_id: load_open_orders
-    display_name: Load open orders
-    step_kind: dataset_query
-    override:
-      dataset_query:
-        query_template_id: demo_open_orders_query
-        result_target: state.demo_orders_result
-        row_limit: 10
-        timeout_seconds: 30
-- phase_id: count_demo_rows
-  display_name: Count Returned Rows
-  gate:
-    type: none
-  steps:
-  - step_id: count_open_orders
-    display_name: Count open orders
-    step_kind: connector
-    connector_id: connector.std.text
-    override:
-      connector:
-        function_name: length
-    input_mapping_jsonb:
-      value: state.demo_orders_result.rows
-    output_mapping_jsonb:
-      result: state.demo_order_count
-- phase_id: complete
-  display_name: Complete
-  gate:
-    type: none
-  steps:
-  - step_id: dataset_demo_done
-    display_name: Finish dataset demo
-    step_kind: stop_success
-    override:
-      stop_success:
-        message: Dataset demo completed.
+steps:
+- step_id: load_open_orders
+  display_name: Load open orders
+  step_kind: dataset_query
+  override:
+    dataset_query:
+      query_template_id: demo_open_orders_query
+      result_target: state.demo_orders_result
+      row_limit: 10
+      timeout_seconds: 30
+- step_id: count_open_orders
+  display_name: Count open orders
+  step_kind: connector
+  connector_id: connector.std.text
+  override:
+    connector:
+      function_name: length
+  input_mapping_jsonb:
+    value: state.demo_orders_result.rows
+  output_mapping_jsonb:
+    result: state.demo_order_count
+- step_id: dataset_demo_done
+  display_name: Finish dataset demo
+  step_kind: stop_success
+  override:
+    stop_success:
+      message: Dataset demo completed.
+groups: []

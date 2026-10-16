@@ -11,7 +11,7 @@ Mapping from the assertions that moved:
 * "demo_oauth_connection_binding is not executed" -> `test_the_oauth_demo_is_declared_unexecuted_with_a_reason`
 * "OAuth=UNVERIFIED is recorded rather than passed silently" -> the same test
 * "the catalog artifact's bytes match its metadata"  -> `showcase_catalog_artifact_bytes`, asserted live
-* "an unassigned dataset step reports code, step, phase, correlation" -> `showcase_dataset_query_failure_diagnostic`, asserted live
+* "an unassigned dataset step reports code, step, step execution, correlation" -> `showcase_dataset_query_failure_diagnostic`, asserted live
 """
 
 from __future__ import annotations
@@ -92,8 +92,11 @@ def test_the_parallel_demo_does_not_claim_code_worktree_side_effects() -> None:
     """
     source = (ARTIFACTS / "demo_parallel_launch_review.yaml").read_text(encoding="utf-8")
 
-    assert "parallel_group: copy" in source
-    assert "parallel_group: risk" in source
+    workflow = yaml.safe_load(source)
+    (group,) = workflow["groups"]
+    assert group["body"]["kind"] == "lanes"
+    assert [lane["lane_id"] for lane in group["body"]["lanes"]] == ["copy", "risk"]
+    assert "parallel_group" not in source
     assert "worktree_lanes" not in source
 
 
@@ -106,16 +109,16 @@ def test_expected_failure_guardrail_uses_its_published_extension_tool() -> None:
             encoding="utf-8"
         )
     )
-    prepare_phase = workflow["phases"][0]
-    measure = prepare_phase["steps"][1]
-    stop_step = workflow["phases"][1]["steps"][0]
+    steps = {step["step_id"]: step for step in workflow["steps"]}
+    measure = steps["measure_failure_reason"]
+    stop_step = steps["expected_stop_fail"]
     function_names = {
         row["name"] for row in tool["interface"]["functions"] if isinstance(row, dict)
     }
 
     assert measure["connector_id"] == "connector.demo_content_tools"
     assert measure["override"]["connector"]["function_name"] == "demo_measure_text"
-    assert prepare_phase["required_outputs"] == ["failure_reason_length"]
+    assert measure["boundary_contract"]["exit"] == ["failure_reason_length"]
     assert measure["output_mapping_jsonb"]["result"] == "state.failure_reason_length"
     assert stop_step["step_kind"] == "stop_fail"
     assert "demo_measure_text" in function_names

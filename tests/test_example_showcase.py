@@ -12,6 +12,7 @@ import threading
 from datetime import UTC, datetime, timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from typing import Any
 from urllib.error import HTTPError
 
 import pytest
@@ -22,6 +23,29 @@ SDK_PUBLIC_ROOT = BUNDLE_ROOT.parents[1] / "core/infrastructure/extension_sdk/pu
 sys.path.insert(0, str(SDK_PUBLIC_ROOT))
 sys.path.insert(0, str(BUNDLE_ROOT))
 
+# The final extension_host_v2 execution scope: all four keys, at most one owner.
+ROOT_STEP_SCOPE = {
+    "group_id": None,
+    "for_each_id": None,
+    "step_id": "store_catalog_artifact",
+    "step_execution_id": "5e0c9a7b-3d21-4f6a-9b8c-7d6e5f4a0001",
+}
+GROUP_STEP_SCOPE = {**ROOT_STEP_SCOPE, "group_id": "parallel_review"}
+FOR_EACH_STEP_SCOPE = {
+    **ROOT_STEP_SCOPE,
+    "for_each_id": "check_each_row",
+    "step_execution_id": "5e0c9a7b-3d21-4f6a-9b8c-7d6e5f4a0002",
+}
+
+
+def _envelope(body: dict, scope: dict | None = None) -> dict:
+    """A host request: the extension_host_v2 contract and its execution scope."""
+    return {
+        "contract_version": "extension_host_v2",
+        "runtime_context": dict(ROOT_STEP_SCOPE if scope is None else scope),
+        **body,
+    }
+
 
 def _bundle_env(bundle_root: Path = BUNDLE_ROOT) -> dict[str, str]:
     pythonpath = os.pathsep.join(
@@ -30,11 +54,11 @@ def _bundle_env(bundle_root: Path = BUNDLE_ROOT) -> dict[str, str]:
     return {**os.environ, "PYTHONPATH": pythonpath}
 
 
-def _invoke(payload: dict, *, bundle_root: Path = BUNDLE_ROOT) -> dict:
+def _invoke(payload: dict, *, bundle_root: Path = BUNDLE_ROOT, scope: dict | None = None) -> dict:
     proc = subprocess.run(
         [sys.executable, str(bundle_root / "main.py")],
         cwd=str(bundle_root),
-        input=json.dumps(payload),
+        input=json.dumps(_envelope(payload, scope)),
         env=_bundle_env(bundle_root),
         capture_output=True,
         text=True,
@@ -167,10 +191,12 @@ def test_bundle_has_no_install_time_project_state_or_embedded_database_artifacts
         if path.is_file()
     }
     assert forbidden_paths.isdisjoint(bundle_paths)
+    # Tool caches (.mypy_cache keeps a cache.db) are not part of the bundle.
     assert not any(
         path.suffix.lower() in {".sqlite", ".sqlite3", ".db"}
         for path in BUNDLE_ROOT.rglob("*")
         if path.is_file()
+        and not any(part.startswith(".") for part in path.relative_to(BUNDLE_ROOT).parts)
     )
 
     artifact_text = "\n".join(
@@ -202,7 +228,7 @@ def test_dataset_workflow_uses_project_connection_and_declares_toolbox_dependenc
     ]
     assert dataset["metadata_jsonb"]["connection_resolution"] == "project_scope"
     assert "connection_id" not in dataset
-    dataset_step = workflow["phases"][0]["steps"][0]["override"]["dataset_query"]
+    dataset_step = workflow["steps"][0]["override"]["dataset_query"]
     assert "connection_id" not in dataset_step
     assert workflow["settings"]["callable"]["expected_inputs"] == [
         {
@@ -332,20 +358,22 @@ def test_external_request_contract_operation_is_mocked_and_host_allowlisted() ->
         cwd=str(BUNDLE_ROOT),
         env=_bundle_env(),
         input=json.dumps(
-            {
-                "mode": "action",
-                "action": {
-                    "action_id": "test_external_request",
-                    "input": {
-                        "resource_id": "demo-resource-1",
-                        "connection_config": {
-                            "base_url": "http://127.0.0.1",
-                            "allowed_hosts": ["127.0.0.1"],
-                            "mock_mode": False,
+            _envelope(
+                {
+                    "mode": "action",
+                    "action": {
+                        "action_id": "test_external_request",
+                        "input": {
+                            "resource_id": "demo-resource-1",
+                            "connection_config": {
+                                "base_url": "http://127.0.0.1",
+                                "allowed_hosts": ["127.0.0.1"],
+                                "mock_mode": False,
+                            },
                         },
                     },
-                },
-            }
+                }
+            )
         ),
         capture_output=True,
         text=True,
@@ -357,7 +385,10 @@ def test_external_request_contract_operation_is_mocked_and_host_allowlisted() ->
     assert blocked_payload["error_code"] == "external_request_blocked"
 
 
-def test_invoke_tool_uploads_artifact_through_action_output_grant(monkeypatch) -> None:
+# Every final scope owner (a root step, a step in a Group, a step in a For each)
+# reaches the artifact grant and uploads.
+@pytest.mark.parametrize("scope", [ROOT_STEP_SCOPE, GROUP_STEP_SCOPE, FOR_EACH_STEP_SCOPE])
+def test_invoke_tool_uploads_artifact_through_action_output_grant(monkeypatch, scope) -> None:
     monkeypatch.delenv("FS_ALLOW_PRIVATE_REMOTE_URLS", raising=False)
     uploaded: dict[str, object] = {}
 
@@ -415,7 +446,8 @@ def test_invoke_tool_uploads_artifact_through_action_output_grant(monkeypatch) -
                     },
                 },
                 "artifacts": {"outputs": [descriptor]},
-            }
+            },
+            scope=scope,
         )
     finally:
         server.shutdown()
@@ -574,7 +606,7 @@ def test_signed_artifact_upload_does_not_follow_private_redirect(monkeypatch) ->
 def test_external_request_live_uses_connection_token_and_pinned_opener(monkeypatch) -> None:
     from handlers import actions
 
-    captured: dict[str, object] = {}
+    captured: dict[str, Any] = {}
 
     class _FakeResponse:
         status = 200
@@ -822,3 +854,124 @@ def test_batch_action_exposes_a_form_reachable_partial_failure() -> None:
         {"index": 1, "id": "rejected-record", "error": "inactive_record"}
     ]
     assert batch["summary"] == {"scored": 1, "failed": 1}
+
+
+@pytest.mark.parametrize(
+    ("contract_version", "scope", "reason"),
+    [
+        ("extension_host_v1", FOR_EACH_STEP_SCOPE, "Unsupported host contract"),
+        ("", FOR_EACH_STEP_SCOPE, "Unsupported host contract"),
+        (
+            "extension_host_v2",
+            {k: v for k, v in FOR_EACH_STEP_SCOPE.items() if k != "for_each_id"},
+            "misses execution scope",
+        ),
+        (
+            "extension_host_v2",
+            {**FOR_EACH_STEP_SCOPE, "group_id": "parallel_review"},
+            "both a Group and a For each",
+        ),
+        (
+            "extension_host_v2",
+            {**ROOT_STEP_SCOPE, "step_execution_id": None},
+            "without its logical execution",
+        ),
+    ],
+)
+def test_foreign_or_incomplete_envelope_is_refused_before_any_effect(
+    monkeypatch, contract_version: str, scope: dict, reason: str
+) -> None:
+    import demo_workflow_tools
+    from handlers import actions
+    from handlers.router import handle_request
+
+    def _no_effect(*_args, **_kwargs):
+        raise AssertionError("nothing may be written or sent for a refused envelope")
+
+    monkeypatch.setattr(demo_workflow_tools, "write_artifact_bytes", _no_effect)
+    monkeypatch.setattr(actions, "open_pinned_url", _no_effect)
+    for body in (
+        {
+            "mode": "action",
+            "action": {
+                "action_id": "invoke_tool",
+                "input": {
+                    "tool_name": "demo_store_product_catalog_artifact",
+                    "arguments": {"rows": [{"product_name": "Widget"}], "filename": "c.csv"},
+                },
+            },
+            "artifacts": {"outputs": [{"binding_key": "catalog_artifact", "role": "output"}]},
+        },
+        {
+            "mode": "action",
+            "action": {
+                "action_id": "test_external_request",
+                "input": {
+                    "resource_id": "demo-resource-1",
+                    "connection_config": {
+                        "base_url": "https://api.example.test",
+                        "allowed_hosts": ["api.example.test"],
+                        "mock_mode": False,
+                    },
+                },
+            },
+        },
+    ):
+        payload = _envelope(body, scope)
+        payload["contract_version"] = contract_version
+
+        response = handle_request(payload)
+
+        assert response["ok"] is False
+        assert response["error_code"] == "invalid_host_envelope"
+        assert reason in response["error"]
+        assert response["definitely_no_external_effect"] is True
+
+
+def test_main_refuses_a_request_without_the_host_envelope() -> None:
+    proc = subprocess.run(
+        [sys.executable, str(BUNDLE_ROOT / "main.py")],
+        cwd=str(BUNDLE_ROOT),
+        env=_bundle_env(),
+        input=json.dumps({"mode": "query", "query": {"query_id": "list_demo_workflows"}}),
+        capture_output=True,
+        text=True,
+        timeout=10,
+        check=False,
+    )
+
+    assert proc.returncode == 2
+    response = json.loads(proc.stdout)
+    assert response["error_code"] == "invalid_host_envelope"
+    assert response["definitely_no_external_effect"] is True
+
+
+def test_bundle_carries_a_valid_logo() -> None:
+    import struct
+
+    raw = (BUNDLE_ROOT / "icon.png").read_bytes()
+    assert raw[:8] == b"\x89PNG\r\n\x1a\n"
+    assert raw[12:16] == b"IHDR"
+    width, height = struct.unpack(">II", raw[16:24])
+    assert width == height
+    assert 32 <= width <= 512
+    assert len(raw) <= 100 * 1024
+
+
+def test_every_bundled_workflow_uses_the_final_model() -> None:
+    """Steps, Groups, For each containers and one execution graph; no phases."""
+    descriptor = yaml.safe_load((BUNDLE_ROOT / "extension-descriptor.yaml").read_text())
+    legacy_step_keys = {"phase_id", "parallel_group", "batch_policy", "execution_policy"}
+    for entry in descriptor["artifacts"]["workflows"]:
+        workflow = yaml.safe_load((BUNDLE_ROOT / entry["ref"]).read_text(encoding="utf-8"))
+        assert "phases" not in workflow, entry["ref"]
+        assert "execution_graph" not in workflow, entry["ref"]
+        graph = workflow["settings"]["execution_graph"]
+        assert graph["schema_version"] == 1
+        assert graph["entry"]["kind"] in {"step", "group"}
+        for step in workflow["steps"]:
+            assert step["step_kind"] != "for_each", entry["ref"]
+            assert not legacy_step_keys & set(step), (entry["ref"], step["step_id"])
+            for config in (step.get("override") or {}).values():
+                if isinstance(config, dict):
+                    assert not {"on_true", "on_false", "default"} & set(config), step["step_id"]

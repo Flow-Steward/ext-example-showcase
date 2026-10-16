@@ -1,12 +1,56 @@
 workflow_id: demo_product_catalog_enrichment
-version: 1.0.0
+version: 1.1.0
 display_name: 'Demo: Product Catalog Enrichment'
-description: Loads a sample CSV catalog, validates rows with for_each, batches them, enriches descriptions,
+description: Loads a sample CSV catalog, validates rows with a For each, batches them, enriches descriptions,
   and stores a CSV artifact through configured artifact storage.
 enabled: true
 trigger:
   confidence_threshold: 0.0
 settings:
+  execution_graph:
+    schema_version: 1
+    entry: {kind: step, id: load_catalog_rows}
+    edges:
+    - source: {kind: step, id: load_catalog_rows}
+      outcome: {name: success}
+      target: {kind: step, id: prepare_row_checks}
+      rework: false
+    - source: {kind: step, id: prepare_row_checks}
+      outcome: {name: success}
+      target: {kind: for_each, id: check_each_row}
+      rework: false
+    - source: {kind: step, id: record_row_name}
+      outcome: {name: success}
+      target: {kind: step, id: collect_row_check}
+      rework: false
+    - source: {kind: step, id: collect_row_check}
+      outcome: {name: success}
+      target: {kind: for_each_exit, for_each_id: check_each_row, lane_id: null}
+      rework: false
+    - source: {kind: for_each, id: check_each_row}
+      outcome: {name: success}
+      target: {kind: step, id: batch_catalog_rows}
+      rework: false
+    - source: {kind: step, id: batch_catalog_rows}
+      outcome: {name: success}
+      target: {kind: for_each, id: inspect_batches_loop}
+      rework: false
+    - source: {kind: step, id: measure_current_batch}
+      outcome: {name: success}
+      target: {kind: for_each_exit, for_each_id: inspect_batches_loop, lane_id: null}
+      rework: false
+    - source: {kind: for_each, id: inspect_batches_loop}
+      outcome: {name: success}
+      target: {kind: step, id: enrich_rows}
+      rework: false
+    - source: {kind: step, id: enrich_rows}
+      outcome: {name: success}
+      target: {kind: step, id: store_catalog_artifact}
+      rework: false
+    - source: {kind: step, id: store_catalog_artifact}
+      outcome: {name: success}
+      target: {kind: step, id: catalog_done}
+      rework: false
   traits:
     demo: true
   policies:
@@ -64,158 +108,149 @@ tags:
 - workflow-demo
 - catalog
 - artifact-storage
-phases:
-- phase_id: load_catalog
-  phase_kind: start
-  display_name: Load Catalog CSV
+steps:
+- step_id: load_catalog_rows
+  display_name: Load catalog rows
   description: Read the bundled CSV fixture.
-  required_outputs:
-  - catalog_rows
-  gate:
-    type: none
-  steps:
-  - step_id: load_catalog_rows
-    display_name: Load catalog rows
-    step_kind: connector
-    connector_id: connector.demo_product_catalog_tools
-    override:
-      connector:
-        function_name: demo_load_product_catalog
-    input_mapping_jsonb:
-      limit: literal:10
-      job_id: state.job_id
-    output_mapping_jsonb:
-      rows: state.catalog_rows
-      row_count: state.catalog_row_count
-      source_file: state.catalog_source_file
-      source_file_url: state.catalog_source_file_url
-      source_artifact: state.catalog_source_artifact
-- phase_id: validate_rows
-  display_name: Validate Rows
-  description: Run lightweight inline checks for each catalog row.
-  required_outputs:
-  - catalog_row_checks
-  gate:
-    type: none
-  steps:
-  - step_id: check_each_row
-    display_name: Check each row
-    step_kind: for_each
-    override:
-      for_each:
-        source_path: state.catalog_rows
-        item_name: state.row
-        index_name: state.row_index
-        result_target: state.catalog_row_checks
-        concurrency_limit: 2
-        continue_on_error: true
-        steps:
-        - step_kind: set_variable
-          override:
-            set_variable:
-              assignments:
-                state.row_name:
-                  source: state.row.product_name
-- phase_id: batch_rows
-  display_name: Batch Rows
+  step_kind: connector
+  connector_id: connector.demo_product_catalog_tools
+  override:
+    connector:
+      function_name: demo_load_product_catalog
+  input_mapping_jsonb:
+    limit: literal:10
+    job_id: state.job_id
+  output_mapping_jsonb:
+    rows: state.catalog_rows
+    row_count: state.catalog_row_count
+    source_file: state.catalog_source_file
+    source_file_url: state.catalog_source_file_url
+    source_artifact: state.catalog_source_artifact
+  boundary_contract:
+    exit:
+    - catalog_rows
+- step_id: prepare_row_checks
+  display_name: Prepare row checks
+  description: The list each checked row is collected into.
+  step_kind: set_variable
+  override:
+    set_variable:
+      assignments:
+        state.catalog_row_checks: []
+- step_id: record_row_name
+  display_name: Record row name
+  description: A lightweight inline check of one catalog row; a failed row does not stop the others.
+  step_kind: set_variable
+  for_each_id: check_each_row
+  error_policy:
+    on_error: continue
+  override:
+    set_variable:
+      assignments:
+        state.row_name:
+          source: state.row.product_name
+- step_id: collect_row_check
+  display_name: Collect row check
+  step_kind: collect
+  for_each_id: check_each_row
+  override:
+    collect:
+      target: state.catalog_row_checks
+      source: state.row_name
+- step_id: batch_catalog_rows
+  display_name: Batch catalog rows
   description: Chunk the catalog before enrichment.
-  required_outputs:
-  - catalog_batches
-  gate:
-    type: none
-  steps:
-  - step_id: batch_catalog_rows
-    display_name: Batch catalog rows
-    step_kind: batch
-    override:
-      batch:
-        source_path: state.catalog_rows
-        batch_size: 5
-        result_target: state.catalog_batches
-        emit_partial_batch: true
-- phase_id: inspect_batches_loop
-  display_name: Inspect Batches Loop
-  description: Demonstrates loop metadata by iterating over generated batches.
-  loop:
-    over: catalog_batches
-    item_name: current_batch
-  required_outputs:
-  - current_batch_size
-  gate:
-    type: none
-  steps:
-  - step_id: measure_current_batch
-    display_name: Measure current batch
-    step_kind: connector
-    connector_id: connector.std.text
-    override:
-      connector:
-        function_name: length
-        input_mapping:
-          value: state.current_batch
-        output_mapping:
-          result: state.current_batch_size
-    input_mapping_jsonb:
-      value: state.current_batch
-    output_mapping_jsonb:
-      result: state.current_batch_size
-- phase_id: enrich_catalog
-  display_name: Enrich Catalog
+  step_kind: batch
+  override:
+    batch:
+      source_path: state.catalog_rows
+      batch_size: 5
+      result_target: state.catalog_batches
+      emit_partial_batch: true
+  boundary_contract:
+    exit:
+    - catalog_batches
+- step_id: measure_current_batch
+  display_name: Measure current batch
+  step_kind: connector
+  connector_id: connector.std.text
+  for_each_id: inspect_batches_loop
+  override:
+    connector:
+      function_name: length
+      input_mapping:
+        value: state.current_batch
+      output_mapping:
+        result: state.current_batch_size
+  input_mapping_jsonb:
+    value: state.current_batch
+  output_mapping_jsonb:
+    result: state.current_batch_size
+  boundary_contract:
+    exit:
+    - current_batch_size
+- step_id: enrich_rows
+  display_name: Enrich rows
   description: Create deterministic product descriptions.
-  required_outputs:
-  - enriched_catalog_rows
-  gate:
-    type: none
-  steps:
-  - step_id: enrich_rows
-    display_name: Enrich rows
-    step_kind: connector
-    connector_id: connector.demo_product_catalog_tools
-    override:
-      connector:
-        function_name: demo_enrich_product_catalog
-    input_mapping_jsonb:
-      rows: state.catalog_rows
-      tone: literal:friendly
-      max_rows: literal:100
-      batch_label: literal:demo-extension
-    output_mapping_jsonb:
-      rows: state.enriched_catalog_rows
-      row_count: state.enriched_row_count
-      ready_count: state.enriched_ready_count
-- phase_id: store_artifact
-  display_name: Store Artifact
+  step_kind: connector
+  connector_id: connector.demo_product_catalog_tools
+  override:
+    connector:
+      function_name: demo_enrich_product_catalog
+  input_mapping_jsonb:
+    rows: state.catalog_rows
+    tone: literal:friendly
+    max_rows: literal:100
+    batch_label: literal:demo-extension
+  output_mapping_jsonb:
+    rows: state.enriched_catalog_rows
+    row_count: state.enriched_row_count
+    ready_count: state.enriched_ready_count
+  boundary_contract:
+    exit:
+    - enriched_catalog_rows
+- step_id: store_catalog_artifact
+  display_name: Store enriched CSV
   description: Persist an enriched CSV artifact.
-  required_outputs:
-  - catalog_artifact
-  gate:
-    type: none
-  steps:
-  - step_id: store_catalog_artifact
-    display_name: Store enriched CSV
-    step_kind: connector
-    connector_id: connector.demo_product_catalog_tools
-    override:
-      connector:
-        function_name: demo_store_product_catalog_artifact
-    input_mapping_jsonb:
-      rows: state.enriched_catalog_rows
-      job_id: state.job_id
-      filename: literal:demo_enriched_catalog.csv
-      workflow_id: literal:demo_product_catalog_enrichment
-      retention_class: literal:run_window
-    output_mapping_jsonb:
-      artifact: state.catalog_artifact
-      artifact_id: state.catalog_artifact_id
-      download_url: state.catalog_artifact_url
-- phase_id: complete
-  display_name: Complete
-  gate:
-    type: none
-  steps:
-  - step_id: catalog_done
-    display_name: Finish catalog demo
-    step_kind: stop_success
-    override:
-      stop_success:
-        message: Catalog enrichment completed.
+  step_kind: connector
+  connector_id: connector.demo_product_catalog_tools
+  override:
+    connector:
+      function_name: demo_store_product_catalog_artifact
+  input_mapping_jsonb:
+    rows: state.enriched_catalog_rows
+    job_id: state.job_id
+    filename: literal:demo_enriched_catalog.csv
+    workflow_id: literal:demo_product_catalog_enrichment
+    retention_class: literal:run_window
+  output_mapping_jsonb:
+    artifact: state.catalog_artifact
+    artifact_id: state.catalog_artifact_id
+    download_url: state.catalog_artifact_url
+  boundary_contract:
+    exit:
+    - catalog_artifact
+- step_id: catalog_done
+  display_name: Finish catalog demo
+  step_kind: stop_success
+  override:
+    stop_success:
+      message: Catalog enrichment completed.
+groups: []
+for_each:
+- for_each_id: check_each_row
+  display_name: Check each row
+  description: Run a lightweight inline check for each catalog row.
+  over: state.catalog_rows
+  item_name: row
+  index_name: row_index
+  body: {kind: sequence, entry: {kind: step, id: record_row_name}}
+  boundary_contract:
+    exit:
+    - catalog_row_checks
+- for_each_id: inspect_batches_loop
+  display_name: Inspect batches
+  description: Demonstrates For each over the generated batches.
+  over: state.catalog_batches
+  item_name: current_batch
+  body: {kind: sequence, entry: {kind: step, id: measure_current_batch}}

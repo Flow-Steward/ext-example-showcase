@@ -1,5 +1,5 @@
 workflow_id: demo_oauth_connection_binding
-version: 1.0.0
+version: 1.1.0
 display_name: 'Demo: OAuth Connection Binding'
 description: Demonstrates a reusable workflow step whose OAuth connection is selected from the
   assigned project before execution.
@@ -7,6 +7,14 @@ enabled: true
 trigger:
   confidence_threshold: 0.0
 settings:
+  execution_graph:
+    schema_version: 1
+    entry: {kind: step, id: read_oauth_profile}
+    edges:
+    - source: {kind: step, id: read_oauth_profile}
+      outcome: {name: success}
+      target: {kind: step, id: oauth_binding_done}
+      rework: false
   traits:
     demo: true
     connection_binding_demo: true
@@ -47,36 +55,27 @@ tags:
 - workflow-demo
 - connection-binding
 - oauth
-phases:
-- phase_id: read_profile
-  phase_kind: start
-  display_name: Read OAuth Profile
-  required_outputs:
-  - oauth_profile
-  gate:
-    type: none
-  steps:
-  - step_id: read_oauth_profile
-    display_name: Read connected OAuth profile
-    step_kind: connector
-    connector_id: example_showcase.oauth_profile
-    connector_install_id: example_showcase
-    connection_binding_jsonb: {}
-    override:
-      connector:
-        extension_id: flowsteward.example-showcase
-        action_id: oauth_profile
-    input_mapping_jsonb: {}
-    output_mapping_jsonb:
-      result: state.oauth_profile
-- phase_id: complete
-  display_name: Complete
-  gate:
-    type: none
-  steps:
-  - step_id: oauth_binding_done
-    display_name: Finish OAuth binding demo
-    step_kind: stop_success
-    override:
-      stop_success:
-        message: OAuth connection binding demo completed.
+steps:
+- step_id: read_oauth_profile
+  display_name: Read connected OAuth profile
+  step_kind: connector
+  connector_id: example_showcase.oauth_profile
+  connector_install_id: example_showcase
+  connection_binding_jsonb: {}
+  override:
+    connector:
+      extension_id: flowsteward.example-showcase
+      action_id: oauth_profile
+  input_mapping_jsonb: {}
+  output_mapping_jsonb:
+    result: state.oauth_profile
+  boundary_contract:
+    exit:
+    - oauth_profile
+- step_id: oauth_binding_done
+  display_name: Finish OAuth binding demo
+  step_kind: stop_success
+  override:
+    stop_success:
+      message: OAuth connection binding demo completed.
+groups: []

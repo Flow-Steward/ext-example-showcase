@@ -386,7 +386,8 @@ def showcase_dataset_diagnostic(api: Any, evidence: Any) -> None:
 
     This is the negative half of the dataset demo and needs no seeded data: the
     point is that an unassigned dataset is reported with a code, the step and
-    phase it happened in, and a correlation id to follow it by.
+    the execution of it that failed (step_id, step_execution_id; the step sits at
+    the root, so no group_id), and a correlation id to follow it by.
     """
     # Enabled by the harness for the run, like the matrix above.
     workflows = _qualified_workflow_ids(api)
@@ -435,11 +436,13 @@ def showcase_dataset_diagnostic(api: Any, evidence: Any) -> None:
             status == "failed"
             and error.get("code") == "dataset_not_assigned"
             and bool(error.get("step_id"))
-            and bool(error.get("phase_id"))
+            and bool(error.get("step_execution_id"))
+            and not error.get("group_id")
             and bool(details.get("correlation_id")),
             f"job={job_id}; status={status}; code={error.get('code') or '<missing>'}; "
             f"step={error.get('step_id') or '<missing>'}; "
-            f"phase={error.get('phase_id') or '<missing>'}",
+            f"step_execution={error.get('step_execution_id') or '<missing>'}; "
+            f"group={error.get('group_id') or '<none>'}",
         )
     finally:
         if job_id:

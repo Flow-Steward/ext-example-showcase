@@ -93,7 +93,7 @@ def _validate_external_url(url: str, allowed_hosts: set[str]) -> tuple[bool, str
     return True, ""
 
 
-def _perform_external_get(url: str, token: str = "") -> dict[str, Any]:
+def _perform_external_get(url: str, token: str = "") -> dict[str, Any]:  # nosec B107
     headers = {"Accept": "application/json"}
     if token:
         headers["Authorization"] = f"Bearer {token}"
@@ -125,7 +125,9 @@ def _perform_external_get(url: str, token: str = "") -> dict[str, Any]:
             "status_code": status_code,
             "failure_class": "provider",
             "retryable": status_code in RETRYABLE_HTTP_STATUSES,
-            "retry_after_seconds": parse_retry_after((exc.headers or {}).get("Retry-After")),
+            "retry_after_seconds": parse_retry_after(
+                exc.headers.get("Retry-After") if exc.headers is not None else None
+            ),
             "request_semantics": "safe_read",
             "operation_kind": "source",
             "definitely_no_external_effect": True,
@@ -192,7 +194,7 @@ def save_secrets(action: dict[str, Any]) -> dict[str, Any]:
             "secret_refs": redacted_secret_refs(payload),
         },
         reload=["connection_status", "provider_health"],
-        summary={"status": "saved", "secret_values": "redacted"},
+        summary={"status": "saved", "secret_values": "redacted"},  # nosec B105
     )
 
 
@@ -337,11 +339,11 @@ def oauth_profile(action: dict[str, Any]) -> dict[str, Any]:
             "connection_id": as_text(connection.get("connection_id")),
             "connection_type": as_text(connection.get("connection_type")),
             "environment": as_text(connection.get("environment")),
-            "token_received": True,
+            "token_received": True,  # nosec B105
             "refresh_token_visible": "_oauth_refresh_token" in secrets
             or "refresh_token" in secrets,
         },
-        summary={"token_received": True, "connection_id": as_text(connection.get("connection_id"))},
+        summary={"token_received": True, "connection_id": as_text(connection.get("connection_id"))},  # nosec B105
     )
 
 

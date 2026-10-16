@@ -1,11 +1,23 @@
 workflow_id: demo_weather_summary_child
-version: 1.0.0
+version: 1.1.0
 display_name: 'Demo Child: Weather Summary'
 description: Callable child workflow used by the travel planner invoke_workflow demo.
 enabled: true
 trigger:
   confidence_threshold: 0.0
 settings:
+  execution_graph:
+    schema_version: 1
+    entry: {kind: step, id: child_open_meteo_request}
+    edges:
+    - source: {kind: step, id: child_open_meteo_request}
+      outcome: {name: success}
+      target: {kind: step, id: child_format_weather_summary}
+      rework: false
+    - source: {kind: step, id: child_format_weather_summary}
+      outcome: {name: success}
+      target: {kind: step, id: child_weather_done}
+      rework: false
   traits:
     demo: true
   policies:
@@ -53,58 +65,45 @@ tags:
 - workflow-demo
 - invoke-child
 - weather
-phases:
-- phase_id: fetch_weather
-  phase_kind: start
-  display_name: Fetch Weather
-  required_outputs:
-  - weather_raw
-  gate:
-    type: none
-  steps:
-  - step_id: child_open_meteo_request
-    display_name: Call Open-Meteo
-    step_kind: http_request
-    override:
-      http_request:
-        url: https://api.open-meteo.com/v1/forecast
-        method: GET
-        auth_mode: none
-        query_params:
-          latitude: '{{ state.inputs.latitude | default:54.69 }}'
-          longitude: '{{ state.inputs.longitude | default:25.28 }}'
-          current: temperature_2m,wind_speed_10m,weather_code
-        response_target: state.weather_raw
-        timeout_seconds: 20
-        expected_statuses:
-        - 200
-- phase_id: format_weather
-  display_name: Format Weather
-  required_outputs:
-  - weather_summary
-  gate:
-    type: none
-  steps:
-  - step_id: child_format_weather_summary
-    display_name: Format child weather summary
-    step_kind: connector
-    connector_id: connector.demo_weather_tools
-    override:
-      connector:
-        function_name: demo_weather_brief
-    input_mapping_jsonb:
-      city: state.inputs.city | default:Vilnius
-      weather_response: state.weather_raw
-    output_mapping_jsonb:
-      weather_summary: state.weather_summary
-- phase_id: complete
-  display_name: Complete
-  gate:
-    type: none
-  steps:
-  - step_id: child_weather_done
-    display_name: Finish child weather
-    step_kind: stop_success
-    override:
-      stop_success:
-        message: Child weather completed.
+steps:
+- step_id: child_open_meteo_request
+  display_name: Call Open-Meteo
+  step_kind: http_request
+  override:
+    http_request:
+      url: https://api.open-meteo.com/v1/forecast
+      method: GET
+      auth_mode: none
+      query_params:
+        latitude: '{{ state.inputs.latitude | default:54.69 }}'
+        longitude: '{{ state.inputs.longitude | default:25.28 }}'
+        current: temperature_2m,wind_speed_10m,weather_code
+      response_target: state.weather_raw
+      timeout_seconds: 20
+      expected_statuses:
+      - 200
+  boundary_contract:
+    exit:
+    - weather_raw
+- step_id: child_format_weather_summary
+  display_name: Format child weather summary
+  step_kind: connector
+  connector_id: connector.demo_weather_tools
+  override:
+    connector:
+      function_name: demo_weather_brief
+  input_mapping_jsonb:
+    city: state.inputs.city | default:Vilnius
+    weather_response: state.weather_raw
+  output_mapping_jsonb:
+    weather_summary: state.weather_summary
+  boundary_contract:
+    exit:
+    - weather_summary
+- step_id: child_weather_done
+  display_name: Finish child weather
+  step_kind: stop_success
+  override:
+    stop_success:
+      message: Child weather completed.
+groups: []

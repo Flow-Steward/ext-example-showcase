@@ -5,6 +5,19 @@ Reference Flow Steward extension bundle for extension authors.
 This bundle is intentionally synthetic. It shows the shape of a complete local
 subprocess extension without depending on a real third-party service.
 
+## Requirements
+
+This release speaks the host contract `extension_host_v2` with its final
+execution scope (`group_id`, `for_each_id`, `step_id`, `step_execution_id`)
+and is built on `flowsteward-extension-sdk` 0.4.0. A request with another
+contract, a missing scope key, or both a Group and a For each as its owner is
+refused before anything is read, sent or written. Its demo workflows use the
+final workflow model: steps, Groups (parallel lanes), For each containers and
+one execution graph; there are no phases. Install it on a Flow Steward Core
+that speaks this contract; an older Core does not run it.
+
+Logo: `icon.png` at the bundle root (the Flow Steward wave mark, PNG, 128x128).
+
 ## What It Demonstrates
 
 | Area | Files |

@@ -102,7 +102,7 @@ def load_connection_settings(query: dict[str, Any]) -> dict[str, Any]:
                 "labels": ["example", "showcase"],
             }
         },
-        summary={"status": "loaded", "secret_values": "not returned"},
+        summary={"status": "loaded", "secret_values": "not returned"},  # nosec B105
     )
 
 
@@ -116,7 +116,7 @@ def connection_status(query: dict[str, Any]) -> dict[str, Any]:
             "configured": bool(base_url and username),
             "base_url": base_url,
             "username": username,
-            "secrets": {"password": "<stored>", "api_token": "<stored>"},
+            "secrets": {"password": "<stored>", "api_token": "<stored>"},  # nosec B105
         },
         summary={"status": "ready", "configured": bool(base_url and username)},
     )
