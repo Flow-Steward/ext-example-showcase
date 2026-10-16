@@ -36,8 +36,6 @@ builder_metadata_jsonb:
   - classification
   determinism_level: agentic
   safe_for_auto_use: false
-phases:
-- support_triage
 tags:
 - demo
 - workflow-demo

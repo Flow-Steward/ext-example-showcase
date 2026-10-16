@@ -32,8 +32,6 @@ builder_metadata_jsonb:
   composition_role: content_generation
   determinism_level: agentic
   safe_for_auto_use: false
-phases:
-- parallel_review
 tags:
 - demo
 - workflow-demo

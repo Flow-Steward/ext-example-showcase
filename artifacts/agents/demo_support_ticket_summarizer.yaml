@@ -30,8 +30,6 @@ builder_metadata_jsonb:
   composition_role: summarization
   determinism_level: agentic
   safe_for_auto_use: false
-phases:
-- support_summary
 tags:
 - demo
 - workflow-demo

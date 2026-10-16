@@ -37,8 +37,6 @@ builder_metadata_jsonb:
   - human_review
   determinism_level: agentic
   safe_for_auto_use: false
-phases:
-- approval_routing
 tags:
 - demo
 - workflow-demo

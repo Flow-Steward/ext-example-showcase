@@ -975,3 +975,11 @@ def test_every_bundled_workflow_uses_the_final_model() -> None:
             for config in (step.get("override") or {}).values():
                 if isinstance(config, dict):
                     assert not {"on_true", "on_false", "default"} & set(config), step["step_id"]
+
+
+def test_bundled_agents_name_no_phases() -> None:
+    """Agents are not tied to workflow phases; the final model has none."""
+    descriptor = yaml.safe_load((BUNDLE_ROOT / "extension-descriptor.yaml").read_text())
+    for entry in descriptor["artifacts"]["agents"]:
+        agent = yaml.safe_load((BUNDLE_ROOT / entry["ref"]).read_text(encoding="utf-8"))
+        assert "phases" not in agent, entry["ref"]
