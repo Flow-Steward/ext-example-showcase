@@ -390,7 +390,7 @@ def test_external_request_contract_operation_is_mocked_and_host_allowlisted() ->
 @pytest.mark.parametrize("scope", [ROOT_STEP_SCOPE, GROUP_STEP_SCOPE, FOR_EACH_STEP_SCOPE])
 def test_invoke_tool_uploads_artifact_through_action_output_grant(monkeypatch, scope) -> None:
     monkeypatch.delenv("FS_ALLOW_PRIVATE_REMOTE_URLS", raising=False)
-    uploaded: dict[str, object] = {}
+    uploaded: dict[str, Any] = {}
 
     class _UploadHandler(BaseHTTPRequestHandler):
         def do_PUT(self):

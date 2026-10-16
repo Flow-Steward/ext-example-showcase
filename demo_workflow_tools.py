@@ -15,7 +15,7 @@ try:  # pragma: no cover - dependency is present in the full runtime.
     from langchain_core.tools import tool
 except Exception:  # pragma: no cover
 
-    def tool(func=None, **_kwargs):
+    def tool(func=None, **_kwargs):  # type: ignore[no-redef]
         return func if func is not None else (lambda wrapped: wrapped)
 
 
