@@ -1,0 +1,200 @@
+workflow_id: demo_order_with_client_hook
+version: 1.2.0
+display_name: 'Demo: Order With a Client Hook'
+description: Prepares an order and, before confirming it, calls the "Adjust the order" hook. Each project
+  can connect its own workflow there to change the quantity or the delivery note, or to skip the order.
+  With nothing connected the order passes through unchanged and is confirmed.
+enabled: true
+trigger:
+  confidence_threshold: 0.0
+settings:
+  execution_graph:
+    schema_version: 1
+    entry: {kind: step, id: prepare_order}
+    edges:
+    - source: {kind: step, id: prepare_order}
+      outcome: {name: success}
+      target: {kind: step, id: adjust_order}
+      rework: false
+    - source: {kind: step, id: adjust_order}
+      outcome: {name: success}
+      target: {kind: step, id: should_skip_order}
+      rework: false
+    - source: {kind: step, id: should_skip_order}
+      outcome: {name: 'true'}
+      target: {kind: step, id: mark_order_skipped}
+      rework: false
+    - source: {kind: step, id: should_skip_order}
+      outcome: {name: 'false'}
+      target: {kind: step, id: confirm_order}
+      rework: false
+    - source: {kind: step, id: mark_order_skipped}
+      outcome: {name: success}
+      target: {kind: step, id: order_skipped}
+      rework: false
+    - source: {kind: step, id: confirm_order}
+      outcome: {name: success}
+      target: {kind: step, id: order_confirmed}
+      rework: false
+  traits:
+    demo: true
+  policies:
+    branch_strategy: none
+  callable:
+    enabled: true
+    trigger_channels:
+    - ui
+    - api
+    - mcp
+    - webhook
+    - schedule
+    input_mode: fields
+    strict_inputs: true
+    expected_inputs:
+    - name: customer
+      label: Customer
+      type: string
+      required: true
+      description: Who the order is for.
+    - name: quantity
+      label: Quantity
+      type: number
+      required: true
+      description: How many units to order (1 or more).
+    output_mode: variables
+    expected_outputs:
+    - name: order_status
+      type: string
+      required: false
+      description: confirmed, or skipped when the client hook asked to skip the order.
+    - name: final_order
+      type: object
+      required: false
+      description: The order as the hook returned it (customer, quantity, delivery_note, skip_order and,
+        when the client sets it, client_comment).
+    expected_artifacts: []
+    side_effects: []
+builder_metadata_jsonb:
+  purpose: Show extension authors how to leave a customisable place (a hook) in a protected workflow and
+    how later steps read what the client's workflow returned.
+  use_cases:
+  - hook declaration
+  - client customisation of an extension workflow
+  - reading state.hooks.<hook_id>.output
+  anti_use_cases:
+  - direct child workflow calls (use invoke_workflow with workflow_id)
+  composition_role: hook_owner_workflow
+  determinism_level: deterministic
+  safe_for_auto_use: true
+tags:
+- demo
+- workflow-demo
+- hook
+- invoke-workflow
+steps:
+- step_id: prepare_order
+  display_name: Prepare the order
+  description: Author step. Builds the order from the run inputs with a standard delivery note.
+  step_kind: set_variable
+  override:
+    set_variable:
+      assignments:
+        state.order_customer:
+          source: state.inputs.customer
+        state.order_quantity:
+          source: state.inputs.quantity
+        state.order_delivery_note: Standard delivery
+- step_id: adjust_order
+  display_name: Adjust the order (hook)
+  description: The hook. A project connects its own workflow here; with nothing connected the order
+    passes through unchanged and the step succeeds.
+  step_kind: invoke_workflow
+  override:
+    invoke_workflow:
+      hook:
+        hook_id: adjust_order
+        contract_version: 1
+        display_name: Adjust the order before it is confirmed
+        description: Connect your own workflow to change the quantity or the delivery note, to skip the
+          order, or to leave a comment. The customer is read-only. With nothing connected the order is
+          confirmed as prepared.
+        input_schema:
+          type: object
+          properties:
+            customer:
+              type: string
+              description: Who the order is for (read-only).
+            quantity:
+              type: number
+              minimum: 1
+              description: Units to order; your workflow may change it.
+            delivery_note:
+              type: string
+              description: Delivery instructions; your workflow may change them.
+          required:
+          - customer
+          - quantity
+          - delivery_note
+        input_mapping:
+          customer: state.order_customer
+          quantity: state.order_quantity
+          delivery_note: state.order_delivery_note
+        mutable_fields:
+        - quantity
+        - delivery_note
+        additional_outputs:
+          skip_order:
+            schema:
+              type: boolean
+            default: false
+          client_comment:
+            schema:
+              type: string
+            optional: true
+        stage_contract:
+          summary: Runs after the order is prepared and before it is confirmed; nothing has been confirmed
+            or sent yet.
+          effects_before:
+          - order_prepared
+          effects_after:
+          - order_confirmed
+- step_id: should_skip_order
+  display_name: Did the hook skip the order?
+  description: Reads the output-only field skip_order (false unless the client's workflow returns true).
+  step_kind: if
+  override:
+    if:
+      condition: state.hooks.adjust_order.output.skip_order == true
+- step_id: mark_order_skipped
+  display_name: Mark the order skipped
+  step_kind: set_variable
+  override:
+    set_variable:
+      assignments:
+        state.order_status: skipped
+        state.final_order:
+          source: state.hooks.adjust_order.output
+- step_id: confirm_order
+  display_name: Confirm the order
+  description: Uses the quantity and delivery note the hook returned (the prepared ones when nothing is
+    connected).
+  step_kind: set_variable
+  override:
+    set_variable:
+      assignments:
+        state.order_status: confirmed
+        state.final_order:
+          source: state.hooks.adjust_order.output
+- step_id: order_skipped
+  display_name: Order skipped
+  step_kind: stop_success
+  override:
+    stop_success:
+      message: The client's hook workflow skipped the order.
+- step_id: order_confirmed
+  display_name: Order confirmed
+  step_kind: stop_success
+  override:
+    stop_success:
+      message: The order is confirmed.
+groups: []

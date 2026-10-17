@@ -18,6 +18,21 @@ that speaks this contract; an older Core does not run it.
 
 Logo: `icon.png` at the bundle root (the Flow Steward wave mark, PNG, 128x128).
 
+## What's New in 1.2.0
+
+Four runnable developer examples, all deterministic (Set Variable, Transform,
+If, Collect, Break, Continue; no connectors, no network):
+
+| Workflow | Shows |
+|---|---|
+| `demo_order_with_client_hook` | A protected author workflow with a **hook** a client fills with its own workflow |
+| `demo_group_sequence_and_lanes` | A Group that runs its steps once in sequence, and one that runs parallel lanes once |
+| `demo_for_each_collect_controls` | A For each over a list with Collect `append` and `set_key`, Continue and Break |
+| `demo_container_error_route` | A For each whose On error routes to a Stop · fail step |
+
+See [Hooks For Extension Authors](#hooks-for-extension-authors) and
+[Container Examples](#container-examples).
+
 ## What It Demonstrates
 
 | Area | Files |
@@ -89,6 +104,131 @@ or through the dedicated workflow-binding API. Flow Steward materializes a
 minimal owner-marked registry anchor and persists the project binding in the same
 transaction. Disabling or uninstalling the extension remains dependency-safe and
 prevents new use without leaving an invalid project workflow reference.
+
+## Hooks For Extension Authors
+
+A workflow you ship in an extension is a **protected author workflow** in the
+client's account: the client can read its graph, run it and use it in a
+project, but cannot change it. A hook is the place you leave for the client to
+plug in its own logic. `demo_order_with_client_hook` is the worked example:
+it prepares an order, calls the hook "Adjust the order before it is
+confirmed", then confirms the order, or skips it when the client's workflow
+asks to.
+
+### Declaring a hook
+
+A hook is an ordinary `invoke_workflow` step whose config carries `hook`
+instead of a `workflow_id`. It names no child and no child mappings: those
+belong to each project's binding.
+
+```yaml
+- step_id: adjust_order
+  step_kind: invoke_workflow
+  override:
+    invoke_workflow:
+      hook:
+        hook_id: adjust_order              # stable [a-z][a-z0-9_]*, unique in the workflow
+        contract_version: 1                # bump when the contract changes
+        display_name: Adjust the order before it is confirmed
+        description: Change the quantity or the delivery note, or skip the order.
+        input_schema:                      # what the client's workflow receives (JSON Schema object)
+          type: object
+          properties:
+            customer: {type: string}
+            quantity: {type: number, minimum: 1}
+            delivery_note: {type: string}
+          required: [customer, quantity, delivery_note]
+        input_mapping:                     # where each input comes from in your state
+          customer: state.order_customer
+          quantity: state.order_quantity
+          delivery_note: state.order_delivery_note
+        mutable_fields: [quantity, delivery_note]   # inputs the client may replace; customer is read-only
+        additional_outputs:                # output-only fields
+          skip_order: {schema: {type: boolean}, default: false}   # required: needs a default
+          client_comment: {schema: {type: string}, optional: true}
+        stage_contract:                    # where the hook runs
+          summary: After the order is prepared and before it is confirmed.
+          effects_before: [order_prepared]
+          effects_after: [order_confirmed]
+```
+
+Rules Core enforces when the bundle is installed: unknown fields are refused;
+every `input_mapping` key is an `input_schema` property and every required
+input has a source; `mutable_fields` are input names; an output-only field has
+its own name (not an input's), and a required one (`optional` not set) needs a
+`default` that fits its schema.
+
+### Reading what came back
+
+The whole hook output is published at `state.hooks.<hook_id>.output`: the
+inputs (as passed, or as replaced in a mutable field), plus every output-only
+field. Your own variables never change. Later steps read it:
+
+```yaml
+- step_id: should_skip_order
+  step_kind: if
+  override:
+    if:
+      condition: state.hooks.adjust_order.output.skip_order == true
+- step_id: confirm_order
+  step_kind: set_variable
+  override:
+    set_variable:
+      assignments:
+        state.final_order: {source: state.hooks.adjust_order.output}
+```
+
+**Nothing connected** (no binding in the project): no child runs, the output
+is the inputs plus the declared defaults (`skip_order: false`, no
+`client_comment`), and the step succeeds. A hook step has two outcomes:
+Success and On error.
+
+### What a client sees
+
+- The author graph is read-only, with the **Hook** panel on the hook step: the
+  stage (`stage_contract`), whether it is Empty or Connected, the workflow to
+  run here with its input and result mappings, **Connect** / **Disconnect**,
+  and "Or create a new workflow for this hook" with **Create and connect**,
+  which creates an ordinary workflow whose inputs and results are prefilled
+  from the hook. The client edits and test-runs that workflow like any other.
+- A binding is per project: each project can connect a different workflow,
+  or none. Each save is a new binding revision. A run pins the revision (or
+  the absence of one) it started with, recorded in the job's
+  `meta.hook_binding_pins`, so editing the binding changes new runs only.
+- The same is available through the API
+  (`/api/projects/{p}/workflows/{w}/hooks/{hook_id}/bind`, `/unbind`,
+  `/create-and-bind`), MCP and the CLI.
+
+### What a protected author workflow refuses
+
+The client cannot test-run one of your steps on its own, apply changes to the
+graph, clone the workflow, or export it in full: an export holds only a
+reference to the extension workflow, never its steps. Do not set
+`settings.portability.allow_full_export` unless you mean to give the structure
+away; the examples here never do.
+
+## Container Examples
+
+- `demo_group_sequence_and_lanes`: the root starts a quote, the sequence Group
+  "Prepare the quote" sets a header and then title-cases the customer name,
+  the lanes Group "Price the quote" computes the subtotal and picks shipping
+  in parallel, and the root assembles `quote_summary` from what both Groups
+  wrote. A Group runs its body once; iteration is a For each.
+- `demo_for_each_collect_controls`: a For each walks five pick lines
+  (`item_name: line`, `index_name: line_index`). A line marked `stop` hits
+  Break, so the For each ends at once and leaves on success; a line marked
+  `skip` hits Continue and the next line starts; every other line is
+  collected twice: `append` adds its SKU to `picked_skus`, `set_key` writes its
+  quantity under its SKU in `picked_quantity_by_sku`. Result:
+  `[A-100, C-300]` and `{A-100: 2, C-300: 5}`. Both targets are created before
+  the For each: Collect never creates a variable. Break and Continue have no
+  outgoing edges.
+- `demo_container_error_route`: a For each indexes order lines by SKU and has
+  `error_policy: {on_error: route_to_step}` with an `error` edge to a Stop · fail
+  step. By default every line has a SKU and the run completes. Run it with
+  `include_bad_line: true` and the line without a SKU fails its Collect, the
+  step inherits its For each's policy, the For each fails, and its error edge
+  stops the run with the reason from the Stop · fail step.
 
 ## Localization
 

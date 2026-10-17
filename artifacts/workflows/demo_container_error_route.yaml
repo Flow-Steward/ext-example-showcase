@@ -1,0 +1,151 @@
+workflow_id: demo_container_error_route
+version: 1.2.0
+display_name: 'Demo: Container Error Route'
+description: Indexes order lines by SKU with a For each whose On error routes to a Stop · fail step. The
+  default lines all have a SKU and the run succeeds; with include_bad_line a line without a SKU fails
+  its Collect, the For each fails, and its error edge stops the run with a clear reason.
+enabled: true
+trigger:
+  confidence_threshold: 0.0
+settings:
+  execution_graph:
+    schema_version: 1
+    entry: {kind: step, id: use_bad_line}
+    edges:
+    - source: {kind: step, id: use_bad_line}
+      outcome: {name: 'true'}
+      target: {kind: step, id: set_lines_with_gap}
+      rework: false
+    - source: {kind: step, id: use_bad_line}
+      outcome: {name: 'false'}
+      target: {kind: step, id: set_clean_lines}
+      rework: false
+    - source: {kind: step, id: set_clean_lines}
+      outcome: {name: success}
+      target: {kind: for_each, id: index_lines}
+      rework: false
+    - source: {kind: step, id: set_lines_with_gap}
+      outcome: {name: success}
+      target: {kind: for_each, id: index_lines}
+      rework: false
+    - source: {kind: step, id: index_line}
+      outcome: {name: success}
+      target: {kind: for_each_exit, for_each_id: index_lines, lane_id: null}
+      rework: false
+    - source: {kind: for_each, id: index_lines}
+      outcome: {name: success}
+      target: {kind: step, id: lines_indexed}
+      rework: false
+    - source: {kind: for_each, id: index_lines}
+      outcome: {name: error}
+      target: {kind: step, id: reject_order_lines}
+      rework: false
+  traits:
+    demo: true
+  policies:
+    branch_strategy: none
+  callable:
+    enabled: true
+    trigger_channels:
+    - ui
+    - api
+    - mcp
+    - webhook
+    - schedule
+    input_mode: fields
+    strict_inputs: true
+    expected_inputs:
+    - name: include_bad_line
+      label: Include a line without a SKU
+      type: boolean
+      required: false
+      description: Turn on to see the For each fail and its On error route stop the run.
+    output_mode: variables
+    expected_outputs:
+    - name: quantity_by_sku
+      type: object
+      required: false
+      description: The quantity of each order line under its SKU.
+    expected_artifacts: []
+    side_effects: []
+    allow_empty_inputs: true
+builder_metadata_jsonb:
+  purpose: Show a container error route - a For each with on_error route_to_step whose error edge goes to
+    a Stop - fail step.
+  use_cases:
+  - container error handling
+  - failing a run with a clear reason
+  anti_use_cases:
+  - retrying a failed item (a failed item is never replayed by itself)
+  composition_role: container_example
+  determinism_level: deterministic
+  safe_for_auto_use: true
+tags:
+- demo
+- workflow-demo
+- for-each
+- error-route
+steps:
+- step_id: use_bad_line
+  display_name: Include a line without a SKU?
+  step_kind: if
+  override:
+    if:
+      condition: state.inputs.include_bad_line
+- step_id: set_clean_lines
+  display_name: Use clean order lines
+  step_kind: set_variable
+  override:
+    set_variable:
+      assignments:
+        state.order_lines:
+        - {sku: A-100, quantity: 2}
+        - {sku: C-300, quantity: 5}
+        state.quantity_by_sku: {}
+- step_id: set_lines_with_gap
+  display_name: Use order lines with a missing SKU
+  step_kind: set_variable
+  override:
+    set_variable:
+      assignments:
+        state.order_lines:
+        - {sku: A-100, quantity: 2}
+        - {sku: '', quantity: 1}
+        - {sku: C-300, quantity: 5}
+        state.quantity_by_sku: {}
+- step_id: index_line
+  display_name: Index the line by SKU
+  description: Collect set_key needs a non-empty key; a line without a SKU fails here, and the step
+    inherits its For each's route_to_step.
+  step_kind: collect
+  for_each_id: index_lines
+  override:
+    collect:
+      target: state.quantity_by_sku
+      source: state.line.quantity
+      mode: set_key
+      key:
+        source: state.line.sku
+- step_id: lines_indexed
+  display_name: Lines indexed
+  step_kind: stop_success
+  override:
+    stop_success:
+      message: Every order line has a SKU.
+- step_id: reject_order_lines
+  display_name: Reject the order lines (Stop · fail)
+  description: Reached only through the For each's error edge.
+  step_kind: stop_fail
+  override:
+    stop_fail:
+      reason: An order line has no SKU; the For each failed and its On error route stopped the run.
+groups: []
+for_each:
+- for_each_id: index_lines
+  display_name: Index each line
+  description: On error routes to the Stop - fail step instead of failing the run where it stands.
+  over: state.order_lines
+  item_name: line
+  error_policy:
+    on_error: route_to_step
+  body: {kind: sequence, entry: {kind: step, id: index_line}}

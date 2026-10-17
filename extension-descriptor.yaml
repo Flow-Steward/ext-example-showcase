@@ -1,7 +1,7 @@
 schema_version: extension_descriptor_v1
 lifecycle: {data_schema_version: 1, data_migrations: []}
 extension_id: flowsteward.example-showcase
-release_version: 1.1.1
+release_version: 1.2.0
 extension_type: service_extension
 identity:
   display_name: Example Showcase Extension
@@ -49,17 +49,29 @@ artifacts:
   - workflow_id: demo_content_campaign_router
     ref: artifacts/workflows/demo_content_campaign_router.yaml
     publish: true
+  - workflow_id: demo_container_error_route
+    ref: artifacts/workflows/demo_container_error_route.yaml
+    publish: true
   - workflow_id: demo_dataset_open_orders
     ref: artifacts/workflows/demo_dataset_open_orders.yaml
     publish: true
   - workflow_id: demo_expected_failure_guardrail
     ref: artifacts/workflows/demo_expected_failure_guardrail.yaml
     publish: true
+  - workflow_id: demo_for_each_collect_controls
+    ref: artifacts/workflows/demo_for_each_collect_controls.yaml
+    publish: true
+  - workflow_id: demo_group_sequence_and_lanes
+    ref: artifacts/workflows/demo_group_sequence_and_lanes.yaml
+    publish: true
   - workflow_id: demo_incoming_webhook_router
     ref: artifacts/workflows/demo_incoming_webhook_router.yaml
     publish: true
   - workflow_id: demo_oauth_connection_binding
     ref: artifacts/workflows/demo_oauth_connection_binding.yaml
+    publish: true
+  - workflow_id: demo_order_with_client_hook
+    ref: artifacts/workflows/demo_order_with_client_hook.yaml
     publish: true
   - workflow_id: demo_parallel_launch_review
     ref: artifacts/workflows/demo_parallel_launch_review.yaml

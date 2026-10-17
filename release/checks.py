@@ -70,8 +70,11 @@ DATASET_DEPENDENCY_ID = "flowsteward.toolbox-dataset-connector"
 #: Every workflow this bundle publishes, and what running it should produce.
 #: `None` for the output name means the run is expected to fail on purpose.
 EXECUTABLE_MATRIX: dict[str, tuple[dict[str, Any], str, str]] = {
+    "demo_container_error_route": ({}, "quantity_by_sku", "completed"),
     "demo_content_campaign_router": ({"channel": "social"}, "content_brief", "completed"),
     "demo_expected_failure_guardrail": ({}, "", "failed"),
+    "demo_for_each_collect_controls": ({}, "picked_skus", "completed"),
+    "demo_group_sequence_and_lanes": ({}, "quote_summary", "completed"),
     "demo_incoming_webhook_router": (
         {
             "email": "release-smoke@example.invalid",
@@ -80,6 +83,13 @@ EXECUTABLE_MATRIX: dict[str, tuple[dict[str, Any], str, str]] = {
             "source": "release",
         },
         "webhook_summary",
+        "completed",
+    ),
+    # Unbound hook: nothing is connected in the release project, so the order
+    # passes through and is confirmed.
+    "demo_order_with_client_hook": (
+        {"customer": "Release smoke", "quantity": 2},
+        "final_order",
         "completed",
     ),
     "demo_parallel_launch_review": (

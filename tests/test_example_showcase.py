@@ -129,7 +129,7 @@ def test_descriptor_validates_artifacts_and_contract_v2() -> None:
         (BUNDLE_ROOT / "extension-descriptor.yaml").read_text(encoding="utf-8")
     )
     assert descriptor["extension_id"] == "flowsteward.example-showcase"
-    assert len(descriptor["artifacts"]["workflows"]) == 10
+    assert len(descriptor["artifacts"]["workflows"]) == 14
     assert any(
         item["workflow_id"] == "demo_oauth_connection_binding"
         for item in descriptor["artifacts"]["workflows"]
@@ -283,10 +283,10 @@ def test_provider_health_and_artifact_queries_pass() -> None:
     )
     assert payload["ok"] is True
     assert payload["result"]["provider"] == "example_showcase"
-    assert payload["summary"]["workflows"] == 10
+    assert payload["summary"]["workflows"] == 14
 
     workflows = _invoke({"mode": "query", "query": {"query_id": "list_demo_workflows"}})
-    assert workflows["total"] == 10
+    assert workflows["total"] == 14
     assert workflows["items"][0]["workflow_id"]
 
     stats = yaml.safe_load(
@@ -983,3 +983,147 @@ def test_bundled_agents_name_no_phases() -> None:
     for entry in descriptor["artifacts"]["agents"]:
         agent = yaml.safe_load((BUNDLE_ROOT / entry["ref"]).read_text(encoding="utf-8"))
         assert "phases" not in agent, entry["ref"]
+
+
+def _workflow(workflow_id: str) -> dict[str, Any]:
+    path = BUNDLE_ROOT / "artifacts" / "workflows" / f"{workflow_id}.yaml"
+    return yaml.safe_load(path.read_text(encoding="utf-8"))
+
+
+def _steps_by_id(workflow: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    return {step["step_id"]: step for step in workflow["steps"]}
+
+
+def test_every_workflow_file_is_registered_in_the_descriptor() -> None:
+    """A workflow file the descriptor does not name is never installed."""
+    descriptor = yaml.safe_load((BUNDLE_ROOT / "extension-descriptor.yaml").read_text())
+    registered = {
+        entry["workflow_id"]: entry["ref"] for entry in descriptor["artifacts"]["workflows"]
+    }
+    files = {
+        path.stem: path.relative_to(BUNDLE_ROOT).as_posix()
+        for path in (BUNDLE_ROOT / "artifacts" / "workflows").glob("*.yaml")
+    }
+    assert registered == files
+    assert {
+        "demo_order_with_client_hook",
+        "demo_group_sequence_and_lanes",
+        "demo_for_each_collect_controls",
+        "demo_container_error_route",
+    } <= set(registered)
+    for workflow_id in registered:
+        assert _workflow(workflow_id)["workflow_id"] == workflow_id
+
+
+def test_the_hook_declaration_is_complete_and_consistent() -> None:
+    """The fields Core's hook contract requires, with mutable fields among the inputs."""
+    workflow = _workflow("demo_order_with_client_hook")
+    hooks = [
+        step
+        for step in workflow["steps"]
+        if step["step_kind"] == "invoke_workflow"
+        and "hook" in (step.get("override") or {}).get("invoke_workflow", {})
+    ]
+    assert len(hooks) == 1
+    invoke = hooks[0]["override"]["invoke_workflow"]
+    # A hook names no direct child and carries no child mappings of its own.
+    assert set(invoke) == {"hook"}
+    assert "workflow_id" not in hooks[0]
+    hook = invoke["hook"]
+    assert set(hook) <= {
+        "hook_id",
+        "contract_version",
+        "display_name",
+        "description",
+        "input_schema",
+        "input_mapping",
+        "mutable_fields",
+        "additional_outputs",
+        "stage_contract",
+    }
+    assert hook["hook_id"] == "adjust_order"
+    assert type(hook["contract_version"]) is int and hook["contract_version"] == 1
+    assert hook["display_name"].strip() and hook["description"].strip()
+
+    schema = hook["input_schema"]
+    assert schema["type"] == "object"
+    properties = set(schema["properties"])
+    assert set(hook["input_mapping"]) <= properties
+    assert set(schema.get("required") or []) <= set(hook["input_mapping"])
+    assert all(value.startswith("state.") for value in hook["input_mapping"].values())
+    assert hook["mutable_fields"]
+    assert set(hook["mutable_fields"]) <= properties
+
+    outputs = hook["additional_outputs"]
+    assert outputs, "the example declares at least one output-only field"
+    assert not set(outputs) & properties
+    for name, spec in outputs.items():
+        assert set(spec) <= {"schema", "optional", "default"}, name
+        assert isinstance(spec["schema"], dict), name
+        if not spec.get("optional", False):
+            assert "default" in spec, f"required output-only field {name} needs a default"
+    assert outputs["skip_order"] == {"schema": {"type": "boolean"}, "default": False}
+    assert outputs["client_comment"]["optional"] is True
+    assert outputs["client_comment"]["schema"] == {"type": "string"}
+
+    stage = hook["stage_contract"]
+    assert set(stage) <= {"summary", "effects_before", "effects_after"}
+    assert stage["summary"].strip()
+    assert stage["effects_before"] and stage["effects_after"]
+
+
+def test_the_hook_workflow_reads_the_hook_output_and_stays_protected() -> None:
+    workflow = _workflow("demo_order_with_client_hook")
+    steps = _steps_by_id(workflow)
+    output = "state.hooks.adjust_order.output"
+    assert steps["should_skip_order"]["step_kind"] == "if"
+    assert steps["should_skip_order"]["override"]["if"]["condition"].startswith(
+        f"{output}.skip_order"
+    )
+    for step_id in ("mark_order_skipped", "confirm_order"):
+        assignments = steps[step_id]["override"]["set_variable"]["assignments"]
+        assert assignments["state.final_order"] == {"source": output}
+    # No explicit full-export permission: the installed workflow stays a
+    # protected author workflow (readable, never editable or fully exported).
+    assert "portability" not in workflow["settings"]
+    callable_ = workflow["settings"]["callable"]
+    assert callable_["output_mode"] == "variables"
+    assert {row["name"] for row in callable_["expected_outputs"]} == {"order_status", "final_order"}
+    assert {row["name"] for row in callable_["expected_inputs"]} == {"customer", "quantity"}
+
+
+def test_the_group_example_runs_a_sequence_and_parallel_lanes_once() -> None:
+    workflow = _workflow("demo_group_sequence_and_lanes")
+    bodies = {group["group_id"]: group["body"] for group in workflow["groups"]}
+    assert bodies["prepare_quote"]["kind"] == "sequence"
+    assert bodies["price_quote"]["kind"] == "lanes"
+    assert {lane["lane_id"] for lane in bodies["price_quote"]["lanes"]} == {"subtotal", "shipping"}
+    for group in workflow["groups"]:
+        assert not {"kind", "loop"} & set(group), group["group_id"]
+    assert not workflow.get("for_each")
+
+
+def test_the_for_each_example_collects_continues_and_breaks() -> None:
+    workflow = _workflow("demo_for_each_collect_controls")
+    (container,) = workflow["for_each"]
+    assert container["over"] == "state.pick_lines"
+    assert container["body"]["kind"] == "sequence"
+    body = [step for step in workflow["steps"] if step.get("for_each_id") == "walk_pick_lines"]
+    kinds = [step["step_kind"] for step in body]
+    assert "break" in kinds and "continue" in kinds
+    modes = {step["override"]["collect"]["mode"] for step in body if step["step_kind"] == "collect"}
+    assert modes == {"append", "set_key"}
+    edges = workflow["settings"]["execution_graph"]["edges"]
+    controls = {step["step_id"] for step in body if step["step_kind"] in {"break", "continue"}}
+    assert not [edge for edge in edges if edge["source"]["id"] in controls]
+
+
+def test_the_error_route_example_sends_the_container_error_to_stop_fail() -> None:
+    workflow = _workflow("demo_container_error_route")
+    (container,) = workflow["for_each"]
+    assert container["error_policy"] == {"on_error": "route_to_step"}
+    steps = _steps_by_id(workflow)
+    edges = workflow["settings"]["execution_graph"]["edges"]
+    (error_edge,) = [edge for edge in edges if edge["outcome"]["name"] == "error"]
+    assert error_edge["source"] == {"kind": "for_each", "id": container["for_each_id"]}
+    assert steps[error_edge["target"]["id"]]["step_kind"] == "stop_fail"

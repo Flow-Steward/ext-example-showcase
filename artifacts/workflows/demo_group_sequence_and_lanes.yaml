@@ -1,0 +1,194 @@
+workflow_id: demo_group_sequence_and_lanes
+version: 1.2.0
+display_name: 'Demo: Groups Run Once'
+description: Two Groups, each run once. "Prepare the quote" runs its steps in sequence; "Price the quote"
+  runs two lanes in parallel and joins them. No connectors, no network.
+enabled: true
+trigger:
+  confidence_threshold: 0.0
+settings:
+  execution_graph:
+    schema_version: 1
+    entry: {kind: step, id: start_quote}
+    edges:
+    - source: {kind: step, id: start_quote}
+      outcome: {name: success}
+      target: {kind: group, id: prepare_quote}
+      rework: false
+    - source: {kind: step, id: set_quote_header}
+      outcome: {name: success}
+      target: {kind: step, id: format_customer_name}
+      rework: false
+    - source: {kind: step, id: format_customer_name}
+      outcome: {name: success}
+      target: {kind: group_exit, group_id: prepare_quote, lane_id: null}
+      rework: false
+    - source: {kind: group, id: prepare_quote}
+      outcome: {name: success}
+      target: {kind: group, id: price_quote}
+      rework: false
+    - source: {kind: step, id: compute_subtotal}
+      outcome: {name: success}
+      target: {kind: group_exit, group_id: price_quote, lane_id: subtotal}
+      rework: false
+    - source: {kind: step, id: choose_shipping}
+      outcome: {name: success}
+      target: {kind: group_exit, group_id: price_quote, lane_id: shipping}
+      rework: false
+    - source: {kind: group, id: price_quote}
+      outcome: {name: success}
+      target: {kind: step, id: assemble_quote}
+      rework: false
+    - source: {kind: step, id: assemble_quote}
+      outcome: {name: success}
+      target: {kind: step, id: quote_done}
+      rework: false
+  traits:
+    demo: true
+  policies:
+    branch_strategy: none
+  callable:
+    enabled: true
+    trigger_channels:
+    - ui
+    - api
+    - mcp
+    - webhook
+    - schedule
+    input_mode: fields
+    strict_inputs: true
+    expected_inputs: []
+    output_mode: variables
+    expected_outputs:
+    - name: quote_summary
+      type: object
+      required: false
+      description: Header, customer, subtotal and shipping, assembled after both Groups ran.
+    expected_artifacts: []
+    side_effects: []
+    allow_empty_inputs: true
+builder_metadata_jsonb:
+  purpose: Show a Group that runs its steps once in sequence and a Group that runs parallel lanes once and
+    joins them.
+  use_cases:
+  - sequence group
+  - parallel lanes
+  - grouping related steps
+  anti_use_cases:
+  - iterating over a list (use For each)
+  composition_role: container_example
+  determinism_level: deterministic
+  safe_for_auto_use: true
+tags:
+- demo
+- workflow-demo
+- group
+- parallel
+steps:
+- step_id: start_quote
+  display_name: Start the quote
+  description: Root step. The draft every later step reads.
+  step_kind: set_variable
+  override:
+    set_variable:
+      assignments:
+        state.quote_draft:
+          customer: acme trading ltd
+          unit_price: 12.5
+          units: 4
+- step_id: set_quote_header
+  display_name: Set the quote header
+  description: First step of the sequence Group.
+  step_kind: set_variable
+  group_id: prepare_quote
+  override:
+    set_variable:
+      assignments:
+        state.quote_header: Quote Q-1001
+- step_id: format_customer_name
+  display_name: Format the customer name
+  description: Second step of the sequence Group; runs after the header is set.
+  step_kind: transform
+  group_id: prepare_quote
+  override:
+    transform:
+      mode: object
+      input:
+        source: state.quote_draft
+      fields:
+      - from: customer
+        to: customer
+        type: text
+        actions:
+        - action: text.title_case
+      output_mode: mapped_only
+      result_target: state.quote_customer
+- step_id: compute_subtotal
+  display_name: Compute the subtotal
+  description: Lane "subtotal" of the parallel Group.
+  step_kind: transform
+  group_id: price_quote
+  lane_id: subtotal
+  override:
+    transform:
+      mode: object
+      input:
+        source: state.quote_draft
+      fields:
+      - from: unit_price
+        to: subtotal
+        type: number
+        actions:
+        - action: number.multiply
+          params:
+            factor: 4
+      output_mode: mapped_only
+      result_target: state.quote_pricing
+- step_id: choose_shipping
+  display_name: Choose shipping
+  description: Lane "shipping" of the parallel Group; runs at the same time as the subtotal lane.
+  step_kind: set_variable
+  group_id: price_quote
+  lane_id: shipping
+  override:
+    set_variable:
+      assignments:
+        state.quote_shipping:
+          method: standard
+          price: 4.9
+- step_id: assemble_quote
+  display_name: Assemble the quote
+  description: Root step after both Groups; reads what each of them wrote.
+  step_kind: set_variable
+  override:
+    set_variable:
+      assignments:
+        state.quote_summary.header:
+          source: state.quote_header
+        state.quote_summary.customer:
+          source: state.quote_customer.customer
+        state.quote_summary.subtotal:
+          source: state.quote_pricing.subtotal
+        state.quote_summary.shipping:
+          source: state.quote_shipping
+- step_id: quote_done
+  display_name: Finish the quote
+  step_kind: stop_success
+  override:
+    stop_success:
+      message: Both Groups ran once; the quote is assembled.
+groups:
+- group_id: prepare_quote
+  display_name: Prepare the quote
+  description: A sequence Group. Its steps run once, one after another.
+  body: {kind: sequence, entry: {kind: step, id: set_quote_header}}
+- group_id: price_quote
+  display_name: Price the quote
+  description: A lanes Group. Both lanes run once, in parallel, and the Group joins them.
+  body:
+    kind: lanes
+    lanes:
+    - lane_id: subtotal
+      entry: {kind: step, id: compute_subtotal}
+    - lane_id: shipping
+      entry: {kind: step, id: choose_shipping}

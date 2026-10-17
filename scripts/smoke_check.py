@@ -64,7 +64,7 @@ def main() -> int:
         [_TOKEN_MAIN_PY],
         {"mode": "query", "query": {"query_id": "list_demo_workflows"}},
     )
-    if workflows.get("total") != 10:
+    if workflows.get("total") != 14:
         raise RuntimeError(f"workflow artifact query failed: {workflows}")
 
     external = _run(

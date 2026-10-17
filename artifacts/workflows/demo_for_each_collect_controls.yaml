@@ -1,0 +1,167 @@
+workflow_id: demo_for_each_collect_controls
+version: 1.2.0
+display_name: 'Demo: For Each With Collect, Continue and Break'
+description: Walks a pick list with a For each. Collect appends each picked SKU to a list and sets its
+  quantity under the SKU key of an object; Continue skips a line marked "skip"; Break stops at the line
+  marked "stop", so the lines after it are never read.
+enabled: true
+trigger:
+  confidence_threshold: 0.0
+settings:
+  execution_graph:
+    schema_version: 1
+    entry: {kind: step, id: prepare_pick_list}
+    edges:
+    - source: {kind: step, id: prepare_pick_list}
+      outcome: {name: success}
+      target: {kind: for_each, id: walk_pick_lines}
+      rework: false
+    - source: {kind: step, id: is_stop_line}
+      outcome: {name: 'true'}
+      target: {kind: step, id: stop_walking}
+      rework: false
+    - source: {kind: step, id: is_stop_line}
+      outcome: {name: 'false'}
+      target: {kind: step, id: is_skip_line}
+      rework: false
+    - source: {kind: step, id: is_skip_line}
+      outcome: {name: 'true'}
+      target: {kind: step, id: skip_line}
+      rework: false
+    - source: {kind: step, id: is_skip_line}
+      outcome: {name: 'false'}
+      target: {kind: step, id: collect_sku}
+      rework: false
+    - source: {kind: step, id: collect_sku}
+      outcome: {name: success}
+      target: {kind: step, id: collect_quantity}
+      rework: false
+    - source: {kind: step, id: collect_quantity}
+      outcome: {name: success}
+      target: {kind: for_each_exit, for_each_id: walk_pick_lines, lane_id: null}
+      rework: false
+    - source: {kind: for_each, id: walk_pick_lines}
+      outcome: {name: success}
+      target: {kind: step, id: pick_list_done}
+      rework: false
+  traits:
+    demo: true
+  policies:
+    branch_strategy: none
+  callable:
+    enabled: true
+    trigger_channels:
+    - ui
+    - api
+    - mcp
+    - webhook
+    - schedule
+    input_mode: fields
+    strict_inputs: true
+    expected_inputs: []
+    output_mode: variables
+    expected_outputs:
+    - name: picked_skus
+      type: array
+      required: false
+      description: 'Collect append: the SKUs picked before the stop line, in order (A-100, C-300).'
+    - name: picked_quantity_by_sku
+      type: object
+      required: false
+      description: 'Collect set_key: the quantity of each picked SKU under its SKU ({A-100: 2, C-300:
+        5}).'
+    expected_artifacts: []
+    side_effects: []
+    allow_empty_inputs: true
+builder_metadata_jsonb:
+  purpose: Show a For each over a list with Collect (append and set_key), Continue and Break.
+  use_cases:
+  - iterating a list
+  - collecting results per item
+  - skipping items and stopping early
+  anti_use_cases:
+  - running steps once (use a Group)
+  composition_role: container_example
+  determinism_level: deterministic
+  safe_for_auto_use: true
+tags:
+- demo
+- workflow-demo
+- for-each
+- collect
+steps:
+- step_id: prepare_pick_list
+  display_name: Prepare the pick list
+  description: The list to walk and the two variables Collect adds to; Collect never creates them.
+  step_kind: set_variable
+  override:
+    set_variable:
+      assignments:
+        state.pick_lines:
+        - {sku: A-100, quantity: 2, action: pick}
+        - {sku: B-200, quantity: 0, action: skip}
+        - {sku: C-300, quantity: 5, action: pick}
+        - {sku: D-400, quantity: 1, action: stop}
+        - {sku: E-500, quantity: 3, action: pick}
+        state.picked_skus: []
+        state.picked_quantity_by_sku: {}
+- step_id: is_stop_line
+  display_name: Is this the stop line?
+  step_kind: if
+  for_each_id: walk_pick_lines
+  override:
+    if:
+      condition: state.line.action == "stop"
+- step_id: stop_walking
+  display_name: Stop walking (Break)
+  description: Ends the For each now; it leaves on success with what was collected so far.
+  step_kind: break
+  for_each_id: walk_pick_lines
+- step_id: is_skip_line
+  display_name: Is this line skipped?
+  step_kind: if
+  for_each_id: walk_pick_lines
+  override:
+    if:
+      condition: state.line.action == "skip"
+- step_id: skip_line
+  display_name: Skip this line (Continue)
+  description: Ends the current item; the next line starts.
+  step_kind: continue
+  for_each_id: walk_pick_lines
+- step_id: collect_sku
+  display_name: Collect the SKU (append)
+  step_kind: collect
+  for_each_id: walk_pick_lines
+  override:
+    collect:
+      target: state.picked_skus
+      source: state.line.sku
+      mode: append
+- step_id: collect_quantity
+  display_name: Collect the quantity by SKU (set_key)
+  step_kind: collect
+  for_each_id: walk_pick_lines
+  override:
+    collect:
+      target: state.picked_quantity_by_sku
+      source: state.line.quantity
+      mode: set_key
+      key:
+        source: state.line.sku
+- step_id: pick_list_done
+  display_name: Finish the pick list
+  step_kind: stop_success
+  override:
+    stop_success:
+      message: The pick list was walked up to its stop line.
+groups: []
+for_each:
+- for_each_id: walk_pick_lines
+  display_name: Walk the pick lines
+  description: One item per line, one at a time. The current line is state.line, its position
+    state.line_index.
+  over: state.pick_lines
+  item_name: line
+  index_name: line_index
+  body: {kind: sequence, entry: {kind: step, id: is_stop_line}}
