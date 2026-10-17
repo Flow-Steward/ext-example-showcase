@@ -1127,3 +1127,19 @@ def test_the_error_route_example_sends_the_container_error_to_stop_fail() -> Non
     (error_edge,) = [edge for edge in edges if edge["outcome"]["name"] == "error"]
     assert error_edge["source"] == {"kind": "for_each", "id": container["for_each_id"]}
     assert steps[error_edge["target"]["id"]]["step_kind"] == "stop_fail"
+
+
+def test_no_workflow_doubles_the_brief_suffix_in_a_headline() -> None:
+    """The compose function appends " brief", so a channel must not end with it."""
+    descriptor = yaml.safe_load((BUNDLE_ROOT / "extension-descriptor.yaml").read_text())
+    for entry in descriptor["artifacts"]["workflows"]:
+        workflow = yaml.safe_load((BUNDLE_ROOT / entry["ref"]).read_text(encoding="utf-8"))
+        for step in workflow["steps"]:
+            connector = (step.get("override") or {}).get("connector") or {}
+            if connector.get("function_name") != "demo_compose_content_brief":
+                continue
+            channel = str((step.get("input_mapping_jsonb") or {}).get("channel", ""))
+            assert not channel.removeprefix("literal:").strip().endswith("brief"), (
+                entry["ref"],
+                step["step_id"],
+            )

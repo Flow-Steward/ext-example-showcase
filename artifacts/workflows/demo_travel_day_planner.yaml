@@ -110,7 +110,7 @@ steps:
   input_mapping_jsonb:
     topic: state.trip_city
     audience: literal:day travelers
-    channel: literal:travel brief
+    channel: literal:travel
     tone: literal:practical
   output_mapping_jsonb:
     travel_plan_brief: state.travel_plan_brief
