@@ -118,15 +118,15 @@ EXECUTABLE_MATRIX: dict[str, tuple[dict[str, Any], str, str]] = {
 
 #: The deterministic container demos must produce exactly these outputs, not
 #: just something: a Break that does not stop still yields a non-empty
-#: `picked_skus`, and a wrong subtotal still yields a `quote_summary`. A dict
-#: here names the keys that must match; the output may carry more.
+#: `picked_skus`, and a wrong subtotal still yields a `quote_summary`. Values
+#: compare exactly; a dotted name reads one field inside an output.
 EXPECTED_OUTPUTS: dict[str, dict[str, Any]] = {
     "demo_container_error_route": {"quantity_by_sku": {"A-100": 2, "C-300": 5}},
     "demo_for_each_collect_controls": {
         "picked_skus": ["A-100", "C-300"],
         "picked_quantity_by_sku": {"A-100": 2, "C-300": 5},
     },
-    "demo_group_sequence_and_lanes": {"quote_summary": {"subtotal": 50}},
+    "demo_group_sequence_and_lanes": {"quote_summary.subtotal": 50},
 }
 
 #: Runs of a published workflow with other inputs, each expected to stop on
@@ -225,21 +225,21 @@ def _output(detail: dict[str, Any], name: str) -> Any:
     return None
 
 
-def _matches(actual: Any, expected: Any) -> bool:
-    """Whether an output holds the expected value; a dict names the keys to compare."""
-    if isinstance(expected, dict):
-        return isinstance(actual, dict) and all(
-            _matches(actual.get(key), value) for key, value in expected.items()
-        )
-    return actual == expected
+def _output_at(detail: dict[str, Any], dotted_name: str) -> Any:
+    """An output, or with a dotted name one field inside it."""
+    name, *fields = dotted_name.split(".")
+    value: Any = _output(detail, name)
+    for field in fields:
+        value = value.get(field) if isinstance(value, dict) else None
+    return value
 
 
 def _expected_outputs_mismatch(declared: str, detail: dict[str, Any]) -> list[str]:
-    """The names of the outputs that do not hold their expected value."""
+    """The names of the outputs that do not hold exactly their expected value."""
     return [
         name
         for name, value in EXPECTED_OUTPUTS.get(declared, {}).items()
-        if not _matches(_output(detail, name), value)
+        if _output_at(detail, name) != value
     ]
 
 

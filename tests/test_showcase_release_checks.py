@@ -246,7 +246,7 @@ def test_exact_values_catch_a_break_that_did_not_stop_and_a_wrong_subtotal() -> 
     ) == ["picked_skus", "picked_quantity_by_sku"]
     assert module._expected_outputs_mismatch(
         "demo_group_sequence_and_lanes", _job({"quote_summary": {"subtotal": 12.5}})
-    ) == ["quote_summary"]
+    ) == ["quote_summary.subtotal"]
     assert module._expected_outputs_mismatch("demo_container_error_route", _job({})) == [
         "quantity_by_sku"
     ]
