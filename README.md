@@ -90,6 +90,12 @@ workflow step selects a project connection, Flow Steward refreshes/injects the
 current access token into `target.connection.secrets.access_token`, and the
 extension never receives the refresh token.
 
+`demo_oauth_connection_binding` is a pattern only: the `example_showcase_oauth_account`
+connection type points at the placeholder identity provider `idp.example.com`,
+so the connection can never be authorized and a run stops at
+`connection_resolution_failed`. Copy the pattern with a real provider's
+authorization, token and revocation endpoints to run it.
+
 ## Dataset Example
 
 Installation is global and creates no project, project connection, or artifact
@@ -196,6 +202,10 @@ Success and On error.
   or none. Each save is a new binding revision. A run pins the revision (or
   the absence of one) it started with, recorded in the job's
   `meta.hook_binding_pins`, so editing the binding changes new runs only.
+- A binding belongs to one install of your extension. When a client uninstalls
+  it and installs it again, the workflow gets a new id and every project has
+  to connect its hook again. If your release notes ask clients to reinstall,
+  say so there.
 - The same is available through the API
   (`/api/projects/{p}/workflows/{w}/hooks/{hook_id}/bind`, `/unbind`,
   `/create-and-bind`), MCP and the CLI.

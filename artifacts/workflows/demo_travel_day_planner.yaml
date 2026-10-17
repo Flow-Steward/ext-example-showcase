@@ -1,5 +1,5 @@
 workflow_id: demo_travel_day_planner
-version: 1.1.0
+version: 1.2.0
 display_name: 'Demo: Travel Day Planner'
 description: Shows invoke_workflow by calling the Weather Summary child workflow, mapping child output
   back into parent state, and composing a short planning brief.

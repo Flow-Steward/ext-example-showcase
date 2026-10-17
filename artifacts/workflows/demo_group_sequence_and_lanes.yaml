@@ -95,7 +95,6 @@ steps:
         state.quote_draft:
           customer: acme trading ltd
           unit_price: 12.5
-          units: 4
 - step_id: set_quote_header
   display_name: Set the quote header
   description: First step of the sequence Group.
@@ -125,7 +124,8 @@ steps:
       result_target: state.quote_customer
 - step_id: compute_subtotal
   display_name: Compute the subtotal
-  description: Lane "subtotal" of the parallel Group.
+  description: Lane "subtotal" of the parallel Group. The quote is for 4 units, written as the literal
+    factor; number.multiply takes a literal factor only, so multiplying two fields needs another step.
   step_kind: transform
   group_id: price_quote
   lane_id: subtotal

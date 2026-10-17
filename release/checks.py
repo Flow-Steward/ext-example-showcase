@@ -116,6 +116,29 @@ EXECUTABLE_MATRIX: dict[str, tuple[dict[str, Any], str, str]] = {
     "demo_weather_city_brief": ({"city": "Vilnius"}, "weather_summary", "completed"),
 }
 
+#: The deterministic container demos must produce exactly these outputs, not
+#: just something: a Break that does not stop still yields a non-empty
+#: `picked_skus`, and a wrong subtotal still yields a `quote_summary`. A dict
+#: here names the keys that must match; the output may carry more.
+EXPECTED_OUTPUTS: dict[str, dict[str, Any]] = {
+    "demo_container_error_route": {"quantity_by_sku": {"A-100": 2, "C-300": 5}},
+    "demo_for_each_collect_controls": {
+        "picked_skus": ["A-100", "C-300"],
+        "picked_quantity_by_sku": {"A-100": 2, "C-300": 5},
+    },
+    "demo_group_sequence_and_lanes": {"quote_summary": {"subtotal": 50}},
+}
+
+#: Runs of a published workflow with other inputs, each expected to stop on
+#: purpose with the stop step's reason: (workflow, inputs, reason).
+FAILURE_ROUTE_RUNS: dict[str, tuple[str, dict[str, Any], str]] = {
+    "demo_container_error_route_bad_line": (
+        "demo_container_error_route",
+        {"include_bad_line": True},
+        "An order line has no SKU; the For each failed and its On error route stopped the run.",
+    ),
+}
+
 #: Published but not executed here, and why.
 UNEXECUTED = {
     "demo_dataset_open_orders": "needs an external database this suite cannot seed over the API",
@@ -200,6 +223,33 @@ def _output(detail: dict[str, Any], name: str) -> Any:
         if value not in (None, "", [], {}):
             return value
     return None
+
+
+def _matches(actual: Any, expected: Any) -> bool:
+    """Whether an output holds the expected value; a dict names the keys to compare."""
+    if isinstance(expected, dict):
+        return isinstance(actual, dict) and all(
+            _matches(actual.get(key), value) for key, value in expected.items()
+        )
+    return actual == expected
+
+
+def _expected_outputs_mismatch(declared: str, detail: dict[str, Any]) -> list[str]:
+    """The names of the outputs that do not hold their expected value."""
+    return [
+        name
+        for name, value in EXPECTED_OUTPUTS.get(declared, {}).items()
+        if not _matches(_output(detail, name), value)
+    ]
+
+
+def _stopped_with(detail: dict[str, Any], reason: str) -> bool:
+    """The run failed through the stop step whose reason is given, not elsewhere."""
+    for value in (detail.get("error"), detail.get("last_error")):
+        text = value if isinstance(value, str) else str((value or {}).get("message") or "")
+        if reason in text:
+            return True
+    return False
 
 
 def _model_unavailable(detail: dict[str, Any]) -> str:
@@ -304,10 +354,12 @@ def showcase_release_matrix(api: Any, evidence: Any) -> None:
             )
             if declared == "demo_expected_failure_guardrail":
                 expected_outcome = expected_outcome and _expected_failure_guardrail_reached(detail)
+            mismatched = _expected_outputs_mismatch(declared, detail)
             evidence.add(
                 f"showcase_workflow_{declared}",
-                expected_outcome,
-                f"job={job_id}; status={status}; output={bool(output)}",
+                expected_outcome and not mismatched,
+                f"job={job_id}; status={status}; output={bool(output)}; "
+                f"unexpected_values={mismatched or '<none>'}",
             )
             if declared == "demo_product_catalog_enrichment" and isinstance(output, dict):
                 artifact = dict(output)
@@ -319,6 +371,15 @@ def showcase_release_matrix(api: Any, evidence: Any) -> None:
                     status == "completed" and nested not in (None, "", [], {}),
                     f"parent_job={job_id}; status={status}; nested_output={bool(nested)}",
                 )
+        for label, (declared, inputs, reason) in sorted(FAILURE_ROUTE_RUNS.items()):
+            job_id = _submit(api, project_id, workflows[declared], inputs)
+            job_ids.append(job_id)
+            status, detail = _await_job(api, job_id)
+            evidence.add(
+                f"showcase_workflow_{label}",
+                status == "failed" and _stopped_with(detail, reason),
+                f"job={job_id}; status={status}; stopped_with_reason={_stopped_with(detail, reason)}",
+            )
         _showcase_artifact_evidence(api, evidence, artifact, catalog_rows, project_id, job_ids)
         _showcase_artifact_cascade(api, evidence, artifact, project_id)
         for declared, reason in sorted(UNEXECUTED.items()):

@@ -1,5 +1,5 @@
 workflow_id: demo_dataset_open_orders
-version: 1.1.0
+version: 1.2.0
 display_name: 'Demo: Dataset Open Orders'
 description: Runs a saved dataset query against the bundled sales fixture and then reuses the returned
   rows in a follow-up step.

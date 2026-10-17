@@ -168,3 +168,95 @@ def test_expected_failure_release_check_rejects_an_earlier_connector_failure() -
             }
         }
     )
+
+
+def test_exact_value_checks_name_executed_workflows() -> None:
+    """An exact-value check on a workflow the matrix never runs would never fire."""
+    module = _checks_module()
+
+    assert set(module.EXPECTED_OUTPUTS) <= set(module.EXECUTABLE_MATRIX)
+    for declared, _inputs, _reason in module.FAILURE_ROUTE_RUNS.values():
+        assert declared in module.EXECUTABLE_MATRIX
+
+
+def test_the_failure_route_reason_is_the_stop_step_reason() -> None:
+    """The release check looks for the reason the workflow's Stop · fail step gives."""
+    module = _checks_module()
+
+    for declared, inputs, reason in module.FAILURE_ROUTE_RUNS.values():
+        workflow = yaml.safe_load((ARTIFACTS / f"{declared}.yaml").read_text(encoding="utf-8"))
+        declared_inputs = {
+            row["name"] for row in workflow["settings"]["callable"]["expected_inputs"]
+        }
+        stop_reasons = [
+            step["override"]["stop_fail"]["reason"]
+            for step in workflow["steps"]
+            if step["step_kind"] == "stop_fail"
+        ]
+        assert set(inputs) <= declared_inputs
+        assert reason in stop_reasons
+
+
+def _job(outputs: dict) -> dict:
+    """A job detail in the shape the candidate's /api/jobs/{id} returns."""
+    return {"status": "completed", "workflow_run": {"result": {"outputs": outputs}}}
+
+
+def test_exact_values_pass_the_runs_the_stand_produced() -> None:
+    module = _checks_module()
+
+    assert not module._expected_outputs_mismatch(
+        "demo_for_each_collect_controls",
+        _job(
+            {
+                "picked_skus": ["A-100", "C-300"],
+                "picked_quantity_by_sku": {"A-100": 2, "C-300": 5},
+            }
+        ),
+    )
+    assert not module._expected_outputs_mismatch(
+        "demo_group_sequence_and_lanes",
+        _job(
+            {
+                "quote_summary": {
+                    "header": "Quote Q-1001",
+                    "customer": "Acme Trading Ltd",
+                    "shipping": {"price": 4.9, "method": "standard"},
+                    "subtotal": 50,
+                }
+            }
+        ),
+    )
+    assert not module._expected_outputs_mismatch(
+        "demo_container_error_route", _job({"quantity_by_sku": {"A-100": 2, "C-300": 5}})
+    )
+
+
+def test_exact_values_catch_a_break_that_did_not_stop_and_a_wrong_subtotal() -> None:
+    module = _checks_module()
+
+    assert module._expected_outputs_mismatch(
+        "demo_for_each_collect_controls",
+        _job(
+            {
+                "picked_skus": ["A-100", "C-300", "E-500"],
+                "picked_quantity_by_sku": {"A-100": 2, "C-300": 5, "E-500": 1},
+            }
+        ),
+    ) == ["picked_skus", "picked_quantity_by_sku"]
+    assert module._expected_outputs_mismatch(
+        "demo_group_sequence_and_lanes", _job({"quote_summary": {"subtotal": 12.5}})
+    ) == ["quote_summary"]
+    assert module._expected_outputs_mismatch("demo_container_error_route", _job({})) == [
+        "quantity_by_sku"
+    ]
+
+
+def test_the_failure_route_check_needs_the_stop_step_reason() -> None:
+    module = _checks_module()
+    (_declared, _inputs, reason) = module.FAILURE_ROUTE_RUNS["demo_container_error_route_bad_line"]
+
+    assert module._stopped_with({"error": f"Stopped by the workflow: {reason}"}, reason)
+    assert not module._stopped_with(
+        {"error": "Connector step 'Trim the SKUs' failed: invalid_payload"}, reason
+    )

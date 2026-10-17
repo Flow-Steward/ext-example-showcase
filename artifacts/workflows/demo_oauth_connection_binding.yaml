@@ -1,8 +1,10 @@
 workflow_id: demo_oauth_connection_binding
-version: 1.1.0
+version: 1.2.0
 display_name: 'Demo: OAuth Connection Binding'
 description: Demonstrates a reusable workflow step whose OAuth connection is selected from the
-  assigned project before execution.
+  assigned project before execution. Pattern only - the connection type points at the placeholder
+  identity provider idp.example.com, so a run stops at connection_resolution_failed until you copy
+  it with a real provider's endpoints.
 enabled: true
 trigger:
   confidence_threshold: 0.0
