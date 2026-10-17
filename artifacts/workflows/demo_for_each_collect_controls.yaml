@@ -1,7 +1,7 @@
 workflow_id: demo_for_each_collect_controls
 version: 1.2.0
 display_name: 'Demo: For Each With Collect, Continue and Break'
-description: Walks a pick list with a For each. Collect appends each picked SKU to a list and sets its
+description: Normalises a pick list with a list-mode Transform, then walks it with a For each. Collect appends each picked SKU to a list and sets its
   quantity under the SKU key of an object; Continue skips a line marked "skip"; Break stops at the line
   marked "stop", so the lines after it are never read.
 enabled: true
@@ -13,6 +13,10 @@ settings:
     entry: {kind: step, id: prepare_pick_list}
     edges:
     - source: {kind: step, id: prepare_pick_list}
+      outcome: {name: success}
+      target: {kind: step, id: normalise_pick_lines}
+      rework: false
+    - source: {kind: step, id: normalise_pick_lines}
       outcome: {name: success}
       target: {kind: for_each, id: walk_pick_lines}
       rework: false
@@ -92,19 +96,48 @@ tags:
 steps:
 - step_id: prepare_pick_list
   display_name: Prepare the pick list
-  description: The list to walk and the two variables Collect adds to; Collect never creates them.
+  description: The raw lines as they arrive, and the two variables Collect adds to; Collect never
+    creates them.
   step_kind: set_variable
   override:
     set_variable:
       assignments:
-        state.pick_lines:
-        - {sku: A-100, quantity: 2, action: pick}
-        - {sku: B-200, quantity: 0, action: skip}
-        - {sku: C-300, quantity: 5, action: pick}
-        - {sku: D-400, quantity: 1, action: stop}
-        - {sku: E-500, quantity: 3, action: pick}
+        state.raw_pick_lines:
+        - {sku: ' a-100', quantity: 2, action: Pick}
+        - {sku: b-200, quantity: 0, action: SKIP}
+        - {sku: 'C-300 ', quantity: 5, action: pick}
+        - {sku: d-400, quantity: 1, action: Stop}
+        - {sku: e-500, quantity: 3, action: pick}
         state.picked_skus: []
         state.picked_quantity_by_sku: {}
+- step_id: normalise_pick_lines
+  display_name: Normalise the pick lines
+  description: A list-mode Transform before the For each - trims and upper-cases each SKU and
+    lower-cases each action, so the If steps compare clean values.
+  step_kind: transform
+  override:
+    transform:
+      mode: list
+      input:
+        source: state.raw_pick_lines
+      fields:
+      - from: sku
+        to: sku
+        type: text
+        actions:
+        - action: text.trim
+        - action: text.upper
+      - from: quantity
+        to: quantity
+        type: number
+      - from: action
+        to: action
+        type: text
+        actions:
+        - action: text.trim
+        - action: text.lower
+      output_mode: mapped_only
+      result_target: state.pick_lines
 - step_id: is_stop_line
   display_name: Is this the stop line?
   step_kind: if

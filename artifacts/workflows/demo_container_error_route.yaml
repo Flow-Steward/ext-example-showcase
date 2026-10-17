@@ -2,8 +2,9 @@ workflow_id: demo_container_error_route
 version: 1.2.0
 display_name: 'Demo: Container Error Route'
 description: Indexes order lines by SKU with a For each whose On error routes to a Stop · fail step. The
-  default lines all have a SKU and the run succeeds; with include_bad_line a line without a SKU fails
-  its Collect, the For each fails, and its error edge stops the run with a clear reason.
+  default lines all have a SKU and the run succeeds. With include_bad_line, a line whose SKU is only
+  spaces is trimmed to an empty SKU and fails its Collect; the For each fails and its error edge stops
+  the run with a clear reason.
 enabled: true
 trigger:
   confidence_threshold: 0.0
@@ -22,9 +23,13 @@ settings:
       rework: false
     - source: {kind: step, id: set_clean_lines}
       outcome: {name: success}
-      target: {kind: for_each, id: index_lines}
+      target: {kind: step, id: trim_order_lines}
       rework: false
     - source: {kind: step, id: set_lines_with_gap}
+      outcome: {name: success}
+      target: {kind: step, id: trim_order_lines}
+      rework: false
+    - source: {kind: step, id: trim_order_lines}
       outcome: {name: success}
       target: {kind: for_each, id: index_lines}
       rework: false
@@ -98,7 +103,7 @@ steps:
   override:
     set_variable:
       assignments:
-        state.order_lines:
+        state.raw_order_lines:
         - {sku: A-100, quantity: 2}
         - {sku: C-300, quantity: 5}
         state.quantity_by_sku: {}
@@ -108,11 +113,31 @@ steps:
   override:
     set_variable:
       assignments:
-        state.order_lines:
+        state.raw_order_lines:
         - {sku: A-100, quantity: 2}
-        - {sku: '', quantity: 1}
+        - {sku: '   ', quantity: 1}
         - {sku: C-300, quantity: 5}
         state.quantity_by_sku: {}
+- step_id: trim_order_lines
+  display_name: Trim the SKUs
+  description: A list-mode Transform; a SKU of only spaces becomes empty here.
+  step_kind: transform
+  override:
+    transform:
+      mode: list
+      input:
+        source: state.raw_order_lines
+      fields:
+      - from: sku
+        to: sku
+        type: text
+        actions:
+        - action: text.trim
+      - from: quantity
+        to: quantity
+        type: number
+      output_mode: mapped_only
+      result_target: state.order_lines
 - step_id: index_line
   display_name: Index the line by SKU
   description: Collect set_key needs a non-empty key; a line without a SKU fails here, and the step

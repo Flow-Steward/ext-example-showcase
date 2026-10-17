@@ -214,7 +214,8 @@ away; the examples here never do.
   the lanes Group "Price the quote" computes the subtotal and picks shipping
   in parallel, and the root assembles `quote_summary` from what both Groups
   wrote. A Group runs its body once; iteration is a For each.
-- `demo_for_each_collect_controls`: a For each walks five pick lines
+- `demo_for_each_collect_controls`: a list-mode Transform trims and
+  normalises five raw pick lines, then a For each walks them
   (`item_name: line`, `index_name: line_index`). A line marked `stop` hits
   Break, so the For each ends at once and leaves on success; a line marked
   `skip` hits Continue and the next line starts; every other line is
@@ -225,8 +226,9 @@ away; the examples here never do.
   outgoing edges.
 - `demo_container_error_route`: a For each indexes order lines by SKU and has
   `error_policy: {on_error: route_to_step}` with an `error` edge to a Stop · fail
-  step. By default every line has a SKU and the run completes. Run it with
-  `include_bad_line: true` and the line without a SKU fails its Collect, the
+  step. A list-mode Transform trims the SKUs first. By default every line has
+  a SKU and the run completes. Run it with `include_bad_line: true` and the
+  line whose SKU is only spaces is trimmed to an empty SKU and fails its Collect, the
   step inherits its For each's policy, the For each fails, and its error edge
   stops the run with the reason from the Stop · fail step.
 
