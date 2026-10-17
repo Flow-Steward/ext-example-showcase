@@ -71,9 +71,9 @@ tags:
 - saved-query
 dependencies:
   extensions:
-  - extension_id: flowsteward.toolbox-dataset-connector
+  - extension_id: flowsteward.data-connector-mcp-toolbox-postgres
     required: true
-    reason: This workflow executes the projected dataset through Toolbox.
+    reason: This workflow executes the projected dataset through MCP Toolbox for PostgreSQL.
 steps:
 - step_id: load_open_orders
   display_name: Load open orders

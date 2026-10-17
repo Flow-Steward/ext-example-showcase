@@ -51,7 +51,7 @@ RELEASE_SCOPES = [
 #: Enabled by the trusted harness for the run, and restored after it.
 RELEASE_EXTENSIONS = [
     "flowsteward.example-showcase",
-    "flowsteward.toolbox-dataset-connector",
+    "flowsteward.data-connector-mcp-toolbox-postgres",
 ]
 #: The addresses this suite observes besides the candidate. None: it reaches the
 #: candidate and nothing else.
@@ -65,7 +65,7 @@ RELEASE_INPUTS = [
 
 EXTENSION_ID = "flowsteward.example-showcase"
 #: The connector extension the dataset demo needs before it can bind anything.
-DATASET_DEPENDENCY_ID = "flowsteward.toolbox-dataset-connector"
+DATASET_DEPENDENCY_ID = "flowsteward.data-connector-mcp-toolbox-postgres"
 
 #: Every workflow this bundle publishes, and what running it should produce.
 #: `None` for the output name means the run is expected to fail on purpose.

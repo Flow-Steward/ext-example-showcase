@@ -94,7 +94,8 @@ extension never receives the refresh token.
 
 Installation is global and creates no project, project connection, or artifact
 assignment. To run `demo_dataset_open_orders`, install and enable
-`flowsteward.toolbox-dataset-connector`, create a PostgreSQL connection in the
+the PostgreSQL data connector `flowsteward.data-connector-mcp-toolbox-postgres`
+(MCP Toolbox for PostgreSQL), create a PostgreSQL connection in the
 target project, and assign the projected dataset to that project.
 The dataset query resolves the selected connection from project scope at runtime;
 the bundle contains no connection ID, SQLite metadata, or embedded database.

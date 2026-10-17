@@ -221,9 +221,9 @@ def test_dataset_workflow_uses_project_connection_and_declares_toolbox_dependenc
 
     assert workflow["dependencies"]["extensions"] == [
         {
-            "extension_id": "flowsteward.toolbox-dataset-connector",
+            "extension_id": "flowsteward.data-connector-mcp-toolbox-postgres",
             "required": True,
-            "reason": "This workflow executes the projected dataset through Toolbox.",
+            "reason": "This workflow executes the projected dataset through MCP Toolbox for PostgreSQL.",
         }
     ]
     assert dataset["metadata_jsonb"]["connection_resolution"] == "project_scope"
