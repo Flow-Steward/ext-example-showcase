@@ -2,7 +2,7 @@ manifest_version: 2
 lifecycle: {data_schema_version: 1, data_migrations: []}
 extension_id: flowsteward.example-showcase
 kind: tool_provider
-version: 1.2.0
+version: 1.2.1
 display_name: Example Showcase Extension
 description: Reference extension bundle that demonstrates Flow Steward extension structure, UI, actions, queries, workflow triggers, external API/OAuth integration patterns, and demo workflow artifacts.
 vendor:
