@@ -11,7 +11,7 @@ from typing import Any
 
 _TOKEN_MAIN_PY = "main.py"
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 
 # Every request the host sends carries the extension_host_v2 contract and the
 # execution scope of the step it runs for (here a root step).

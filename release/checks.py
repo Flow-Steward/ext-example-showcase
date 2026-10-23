@@ -85,7 +85,7 @@ EXECUTABLE_MATRIX: dict[str, tuple[dict[str, Any], str, str]] = {
         "webhook_summary",
         "completed",
     ),
-    # Unbound hook: nothing is connected in the release project, so the order
+    # Empty hook: the release project adds no steps to it, so the order
     # passes through and is confirmed.
     "demo_order_with_client_hook": (
         {"customer": "Release smoke", "quantity": 2},

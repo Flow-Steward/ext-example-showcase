@@ -1,9 +1,9 @@
 workflow_id: demo_order_with_client_hook
-version: 1.2.0
+version: 1.2.1
 display_name: 'Demo: Order With a Client Hook'
-description: Prepares an order and, before confirming it, calls the "Adjust the order" hook. Each project
-  can connect its own workflow there to change the quantity or the delivery note, or to skip the order.
-  With nothing connected the order passes through unchanged and is confirmed.
+description: Prepares an order and, before confirming it, reaches the "Adjust the order" hook. Each project
+  can add its own steps there to change the quantity or the delivery note, or to skip the order.
+  With no steps added the order passes through unchanged and is confirmed.
 enabled: true
 trigger:
   confidence_threshold: 0.0
@@ -66,7 +66,7 @@ settings:
     - name: order_status
       type: string
       required: false
-      description: confirmed, or skipped when the client hook asked to skip the order.
+      description: confirmed, or skipped when the client's hook steps asked to skip the order.
     - name: final_order
       type: object
       required: false
@@ -106,7 +106,7 @@ steps:
         state.order_delivery_note: Standard delivery
 - step_id: adjust_order
   display_name: Adjust the order (hook)
-  description: The hook. A project connects its own workflow here; with nothing connected the order
+  description: The hook. A project adds its own steps here; with no steps added the order
     passes through unchanged and the step succeeds.
   step_kind: invoke_workflow
   override:
@@ -115,8 +115,8 @@ steps:
         hook_id: adjust_order
         contract_version: 1
         display_name: Adjust the order before it is confirmed
-        description: Connect your own workflow to change the quantity or the delivery note, to skip the
-          order, or to leave a comment. The customer is read-only. With nothing connected the order is
+        description: Add your own steps to change the quantity or the delivery note, to skip the
+          order, or to leave a comment. The customer is read-only. With no steps added the order is
           confirmed as prepared.
         input_schema:
           type: object
@@ -160,7 +160,7 @@ steps:
           - order_confirmed
 - step_id: should_skip_order
   display_name: Did the hook skip the order?
-  description: Reads the output-only field skip_order (false unless the client's workflow returns true).
+  description: Reads the output-only field skip_order (false unless the client's hook steps set it to true).
   step_kind: if
   override:
     if:
@@ -176,8 +176,8 @@ steps:
           source: state.hooks.adjust_order.output
 - step_id: confirm_order
   display_name: Confirm the order
-  description: Uses the quantity and delivery note the hook returned (the prepared ones when nothing is
-    connected).
+  description: Uses the quantity and delivery note the hook returned (the prepared ones when the hook
+    has no steps).
   step_kind: set_variable
   override:
     set_variable:
@@ -190,7 +190,7 @@ steps:
   step_kind: stop_success
   override:
     stop_success:
-      message: The client's hook workflow skipped the order.
+      message: The client's hook steps skipped the order.
 - step_id: order_confirmed
   display_name: Order confirmed
   step_kind: stop_success

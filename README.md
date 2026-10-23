@@ -18,6 +18,13 @@ that speaks this contract; an older Core does not run it.
 
 Logo: `icon.png` at the bundle root (the Flow Steward wave mark, PNG, 128x128).
 
+## What's New in 1.2.1
+
+The hook example now describes a hook as a place where a project adds its own
+steps (nothing is connected to it; with no steps the order passes through
+unchanged). `scripts/smoke_check.py` moved to `.github/scripts/` so the
+release archive no longer contains it.
+
 ## What's New in 1.2.0
 
 Four runnable developer examples, all deterministic (Set Variable, Transform,
@@ -25,7 +32,7 @@ If, Collect, Break, Continue; no connectors, no network):
 
 | Workflow | Shows |
 |---|---|
-| `demo_order_with_client_hook` | A protected author workflow with a **hook** a client fills with its own workflow |
+| `demo_order_with_client_hook` | A protected author workflow with a **hook**, a place where a client adds its own steps |
 | `demo_group_sequence_and_lanes` | A Group that runs its steps once in sequence, and one that runs parallel lanes once |
 | `demo_for_each_collect_controls` | A For each over a list with Collect `append` and `set_key`, Continue and Break |
 | `demo_container_error_route` | A For each whose On error routes to a Stop · fail step |
@@ -64,7 +71,7 @@ extensions/flowsteward_example_showcase/
   contracts/                  # Extension Contract v2 examples
   artifacts/                  # sole-source YAML artifact definitions
   locales/                    # interface translations, one flat YAML per language
-  scripts/smoke_check.py      # local executable smoke
+  .github/scripts/smoke_check.py  # local executable smoke (repository tooling, not packaged)
   tests/                      # bundle-level tests
 ```
 
@@ -117,16 +124,17 @@ prevents new use without leaving an invalid project workflow reference.
 A workflow you ship in an extension is a **protected author workflow** in the
 client's account: the client can read its graph, run it and use it in a
 project, but cannot change it. A hook is the place you leave for the client to
-plug in its own logic. `demo_order_with_client_hook` is the worked example:
-it prepares an order, calls the hook "Adjust the order before it is
-confirmed", then confirms the order, or skips it when the client's workflow
-asks to.
+add its own steps. `demo_order_with_client_hook` is the worked example:
+it prepares an order, reaches the hook "Adjust the order before it is
+confirmed", then confirms the order, or skips it when the client's steps
+ask to. With no steps added, the order passes through unchanged and is
+confirmed.
 
 ### Declaring a hook
 
 A hook is an ordinary `invoke_workflow` step whose config carries `hook`
-instead of a `workflow_id`. It names no child and no child mappings: those
-belong to each project's binding.
+instead of a `workflow_id`. It names no child and no child mappings: each
+project adds its own steps to the hook.
 
 ```yaml
 - step_id: adjust_order
@@ -138,7 +146,7 @@ belong to each project's binding.
         contract_version: 1                # bump when the contract changes
         display_name: Adjust the order before it is confirmed
         description: Change the quantity or the delivery note, or skip the order.
-        input_schema:                      # what the client's workflow receives (JSON Schema object)
+        input_schema:                      # what the client's steps receive (JSON Schema object)
           type: object
           properties:
             customer: {type: string}
@@ -185,30 +193,29 @@ field. Your own variables never change. Later steps read it:
         state.final_order: {source: state.hooks.adjust_order.output}
 ```
 
-**Nothing connected** (no binding in the project): no child runs, the output
+**An empty hook** (the project added no steps): nothing runs, the output
 is the inputs plus the declared defaults (`skip_order: false`, no
 `client_comment`), and the step succeeds. A hook step has two outcomes:
 Success and On error.
 
 ### What a client sees
 
-- The author graph is read-only, with the **Hook** panel on the hook step: the
-  stage (`stage_contract`), whether it is Empty or Connected, the workflow to
-  run here with its input and result mappings, **Connect** / **Disconnect**,
-  and "Or create a new workflow for this hook" with **Create and connect**,
-  which creates an ordinary workflow whose inputs and results are prefilled
-  from the hook. The client edits and test-runs that workflow like any other.
-- A binding is per project: each project can connect a different workflow,
-  or none. Each save is a new binding revision. A run pins the revision (or
-  the absence of one) it started with, recorded in the job's
-  `meta.hook_binding_pins`, so editing the binding changes new runs only.
-- A binding belongs to one install of your extension. When a client uninstalls
-  it and installs it again, the workflow gets a new id and every project has
-  to connect its hook again. If your release notes ask clients to reinstall,
-  say so there.
-- The same is available through the API
-  (`/api/projects/{p}/workflows/{w}/hooks/{hook_id}/bind`, `/unbind`,
-  `/create-and-bind`), MCP and the CLI.
+- The author graph is read-only. The hook is drawn on the canvas like a Group,
+  with its own header (**Hook**, the hook's name, **Empty** while it holds no
+  steps) and the stage (`stage_contract`) in its drawer. The client picks a
+  project and uses **Add step** inside the hook, then edits and test-runs those
+  steps like any other. A step can finish the hook, and the hook's **Test Run**
+  shows what it would publish.
+- Steps are per project: each project adds different steps to the same hook,
+  or none. Nothing is connected to the hook; behind the canvas Flow Steward keeps
+  the steps in a hidden per-project workflow, created by the first step added.
+- A hook's steps belong to one install of your extension. When a client
+  uninstalls it and installs it again, the workflow gets a new id and every
+  project has to add its hook steps again. If your release notes ask clients to
+  reinstall, say so there.
+- Automation can still bind a hook to an existing callable workflow through
+  the API (`/api/projects/{p}/workflows/{w}/hooks/{hook_id}/bind`, `/unbind`,
+  `/create-and-bind`), MCP and the CLI; this example does not use that.
 
 ### What a protected author workflow refuses
 
