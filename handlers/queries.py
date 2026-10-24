@@ -87,41 +87,6 @@ def provider_health(query: dict[str, Any]) -> dict[str, Any]:
     )
 
 
-def load_connection_settings(query: dict[str, Any]) -> dict[str, Any]:
-    _ = query
-    return ok(
-        {
-            "settings": {
-                "base_url": "https://api.example.test",
-                "username": "demo-user",
-                "tenant": "demo",
-                "allowed_hosts": ["api.example.test"],
-                "mock_mode": True,
-                "default_priority": "medium",
-                "notification_channel": "showcase-review",
-                "labels": ["example", "showcase"],
-            }
-        },
-        summary={"status": "loaded", "secret_values": "not returned"},  # nosec B105
-    )
-
-
-def connection_status(query: dict[str, Any]) -> dict[str, Any]:
-    params = _query_params(query)
-    base_url = as_text(params.get("base_url"), "https://api.example.test")
-    username = as_text(params.get("username"), "demo-user")
-    return ok(
-        {
-            "status": "ready",
-            "configured": bool(base_url and username),
-            "base_url": base_url,
-            "username": username,
-            "secrets": {"password": "<stored>", "api_token": "<stored>"},  # nosec B105
-        },
-        summary={"status": "ready", "configured": bool(base_url and username)},
-    )
-
-
 def list_demo_workflows(query: dict[str, Any]) -> dict[str, Any]:
     _ = query
     return ok(
@@ -173,8 +138,6 @@ def operation_contracts(query: dict[str, Any]) -> dict[str, Any]:
 
 QUERY_HANDLERS = {
     "provider_health": provider_health,
-    "load_connection_settings": load_connection_settings,
-    "connection_status": connection_status,
     "list_demo_workflows": list_demo_workflows,
     "list_demo_agents": list_demo_agents,
     "list_demo_tools": list_demo_tools,

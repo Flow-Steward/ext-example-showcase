@@ -1,77 +1,82 @@
 component_id: connection_form
-type: form
+type: connection_form
 title: Connection Settings
-schema_ref: ../../schemas/config.schema.yaml
-ui_schema:
-  version: '1'
-  type: form_ui
-  layout:
-    columns: 2
-  sections:
-  - section_id: account
-    title: Provider Account
-    field_ids:
-    - base_url
-    - username
-    - tenant
-  - section_id: safety
-    title: Request Safety
-    field_ids:
-    - allowed_hosts
-    - mock_mode
-    - default_priority
-    - notification_channel
-  fields:
-  - field_id: base_url
-    path: base_url
-    widget: url
-    section_id: account
-    label: Base URL
-    placeholder: https://api.example.test
-  - field_id: username
-    path: username
-    widget: text
-    section_id: account
-    label: Username
-  - field_id: tenant
-    path: tenant
-    widget: text
-    section_id: account
-    label: Tenant
-  - field_id: allowed_hosts
-    path: allowed_hosts
-    widget: tag_picker
-    section_id: safety
-    label: Allowed Hosts
-    help: External API calls are blocked unless the request host is in this list.
-  - field_id: mock_mode
-    path: mock_mode
-    widget: boolean
-    section_id: safety
-    label: Mock Mode
-  - field_id: default_priority
-    path: default_priority
-    widget: select
-    section_id: safety
-    label: Default Priority
-    props:
-      options:
-      - label: Low
-        value: low
-      - label: Medium
-        value: medium
-      - label: High
-        value: high
-  - field_id: notification_channel
-    path: notification_channel
-    widget: text
-    section_id: safety
-    label: Notification Channel
-  actions:
-    save_label: Save Settings
-    test_label: Test Request
+description: Save this project's connection, then test the selected saved connection. After reloading, select Edit on its stored row.
 data:
-  load_query: load_connection_settings
-  save_action: save_connection_settings
+  connection_kind: extension
+  connection_type: example_showcase_api
+  config_fields:
+  - base_url
+  - username
+  - tenant
+  - allowed_hosts
+  - mock_mode
+  - default_priority
+  - notification_channel
+  secret_fields:
+  - password
+  - api_token
   test_action: test_external_request
-  save_mode: patch
+defaults:
+  base_url: https://api.example.test
+  username: ''
+  tenant: ''
+  allowed_hosts:
+  - api.example.test
+  mock_mode: true
+  default_priority: medium
+  notification_channel: showcase-review
+  resource_id: demo-resource-1
+  perform_live_request: false
+fields:
+- path: base_url
+  widget: url
+  label: Base URL
+  placeholder: https://api.example.test
+  required: true
+- path: username
+  widget: text
+  label: Username
+  required: true
+- path: tenant
+  widget: text
+  label: Tenant
+- path: allowed_hosts
+  widget: tag_picker
+  label: Allowed Hosts
+  help: External API calls are blocked unless the request host is in this list.
+- path: mock_mode
+  widget: boolean
+  label: Mock Mode
+- path: default_priority
+  widget: select
+  label: Default Priority
+  options:
+  - label: Low
+    value: low
+  - label: Medium
+    value: medium
+  - label: High
+    value: high
+- path: notification_channel
+  widget: text
+  label: Notification Channel
+- path: password
+  widget: secret
+  label: Password
+  help: Stored by Flow Steward as a project-scoped encrypted secret.
+- path: api_token
+  widget: secret
+  label: API Token
+  help: Optional bearer token used by external API calls.
+- path: resource_id
+  widget: text
+  label: Resource ID
+  required: true
+- path: perform_live_request
+  widget: boolean
+  label: Perform Live Request
+  help: Uses the selected saved connection. Mock Mode must be disabled and the HTTPS host allowlisted for live calls.
+ui_schema:
+  actions:
+    test_label: Test Request

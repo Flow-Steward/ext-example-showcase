@@ -105,6 +105,148 @@ def _forbidden_contract_json_files() -> list[str]:
     return sorted(forbidden)
 
 
+def test_configuration_uses_native_selected_connection_contract() -> None:
+    """Declaration coverage; the SDK cannot prove host database durability."""
+    page_path = BUNDLE_ROOT / "ui/pages/configuration.yaml"
+    page = yaml.safe_load(page_path.read_text())
+    components = [
+        yaml.safe_load((page_path.parent / item["ref"]).read_text()) for item in page["components"]
+    ]
+    assert [item["type"] for item in components] == ["connection_form"]
+    form = components[0]
+    fields = {item["path"]: item for item in form["fields"]}
+    data = form["data"]
+    assert data["connection_kind"] == "extension"
+    assert data["connection_type"] == "example_showcase_api"
+    assert data["test_action"] == "test_external_request"
+    assert {"save_action", "load_query", "save_mode"}.isdisjoint(data)
+    assert set(data["config_fields"]) == {
+        "base_url",
+        "username",
+        "tenant",
+        "allowed_hosts",
+        "mock_mode",
+        "default_priority",
+        "notification_channel",
+    }
+    assert set(data["secret_fields"]) == {"password", "api_token"}
+    assert set(fields) >= set(data["config_fields"]) | set(data["secret_fields"]) | {
+        "resource_id",
+        "perform_live_request",
+    }
+    assert fields["allowed_hosts"]["widget"] == "tag_picker"
+    assert fields["username"]["required"] is True
+    assert fields["base_url"]["required"] is True
+    assert all(fields[name]["widget"] == "secret" for name in data["secret_fields"])
+    assert form["defaults"]["mock_mode"] is True
+    assert form["defaults"]["perform_live_request"] is False
+    assert form["defaults"]["allowed_hosts"] == ["api.example.test"]
+    assert {"resource_id", "perform_live_request"}.isdisjoint(data["config_fields"])
+    assert {item["value"] for item in fields["default_priority"]["options"]} == {
+        "low",
+        "medium",
+        "high",
+    }
+
+
+def test_native_connection_schema_matches_complete_generic_configuration() -> None:
+    types = yaml.safe_load((BUNDLE_ROOT / "contracts/connection_types.yaml").read_text())
+    api = next(
+        item
+        for item in types["connection_types"]
+        if item["connection_type_id"] == "example_showcase_api"
+    )
+    generic = yaml.safe_load((BUNDLE_ROOT / "schemas/config.schema.yaml").read_text())
+    generic.pop("$schema")
+    assert api["config_schema"] == generic
+    secrets = yaml.safe_load((BUNDLE_ROOT / "schemas/secrets.schema.yaml").read_text())
+    secrets.pop("$schema")
+    assert api["secret_schema"] == secrets
+    assert set(secrets["properties"]) == {"password", "api_token"}
+    assert api["config_schema"]["additionalProperties"] is False
+    assert api["config_schema"]["required"] == ["base_url", "username"]
+    properties = api["config_schema"]["properties"]
+    assert properties["allowed_hosts"]["type"] == "array"
+    assert properties["allowed_hosts"]["items"] == {"type": "string", "minLength": 1}
+    assert properties["mock_mode"]["type"] == "boolean"
+    assert properties["mock_mode"]["default"] is True
+    assert properties["default_priority"]["enum"] == ["low", "medium", "high"]
+    assert properties["username"]["minLength"] == 1
+    assert {"resource_id", "perform_live_request", "password", "api_token"}.isdisjoint(properties)
+    assert api["config_schema"]["allOf"] == [
+        {
+            "if": {"properties": {"mock_mode": {"const": False}}, "required": ["mock_mode"]},
+            "then": {"required": ["allowed_hosts"]},
+        }
+    ]
+
+
+def test_obsolete_echo_persistence_operations_are_not_callable_or_advertised() -> None:
+    from handlers.actions import ACTION_HANDLERS
+    from handlers.common import CONTRACT_OPERATIONS
+    from handlers.queries import QUERY_HANDLERS
+
+    actions = yaml.safe_load((BUNDLE_ROOT / "ui/actions/actions.yaml").read_text())["actions"]
+    queries = yaml.safe_load((BUNDLE_ROOT / "ui/queries/queries.yaml").read_text())["queries"]
+    obsolete = {
+        "save_connection_settings",
+        "save_secrets",
+        "load_connection_settings",
+        "connection_status",
+    }
+    assert obsolete.isdisjoint(ACTION_HANDLERS)
+    assert obsolete.isdisjoint(QUERY_HANDLERS)
+    assert obsolete.isdisjoint(item["action_id"] for item in actions)
+    assert obsolete.isdisjoint(item["query_id"] for item in queries)
+    assert obsolete.isdisjoint(item["operation_id"] for item in CONTRACT_OPERATIONS)
+    for name in ("secrets_form", "external_request_form", "connection_status"):
+        assert not (BUNDLE_ROOT / f"ui/components/{name}.yaml").exists()
+
+
+def test_selected_host_config_wins_and_mock_mode_prevents_network(monkeypatch) -> None:
+    from handlers import actions
+
+    def forbid_network(*_args, **_kwargs):
+        pytest.fail("Mock connection must never send a live request")
+
+    monkeypatch.setattr(actions, "_perform_external_get", forbid_network)
+    config = {
+        "base_url": "https://saved-showcase.example.test",
+        "username": "saved-user",
+        "tenant": "saved-tenant",
+        "allowed_hosts": ["saved-showcase.example.test"],
+        "mock_mode": True,
+        "default_priority": "high",
+        "notification_channel": "saved-review",
+    }
+    action = {
+        "target": {
+            "connection_id": "selected-connection",
+            "project_id": "selected-project",
+            "connection": {
+                "connection_id": "selected-connection",
+                "config": config,
+                "secrets": {"api_token": "synthetic-token", "password": "synthetic-password"},
+            },
+        },
+        "input": {
+            "resource_id": "saved-resource",
+            "perform_live_request": True,
+            "connection_config": {key: "caller-must-not-win" for key in config},
+        },
+    }
+    assert actions._connection_config(action) == config
+    result = actions.test_external_request(action)
+    assert result["ok"] is True
+    assert result["result"]["status"] == "mocked"
+    assert (
+        result["result"]["external_request"]["url"]
+        == "https://saved-showcase.example.test/status?resource_id=saved-resource"
+    )
+    assert "synthetic-token" not in json.dumps(result)
+    assert "synthetic-password" not in json.dumps(result)
+
+
 def test_bundle_manifest_has_showcase_contracts() -> None:
     manifest = yaml.safe_load((BUNDLE_ROOT / "extension.yaml").read_text(encoding="utf-8"))
     assert manifest["extension_id"] == "flowsteward.example-showcase"

@@ -74,24 +74,13 @@ component.connection_form.field.default_priority.option.low.label: Žemas
 component.connection_form.field.default_priority.option.medium.label: Vidutinis
 component.connection_form.field.default_priority.option.high.label: Aukštas
 component.connection_form.field.notification_channel.label: Pranešimų kanalas
-component.connection_form.section.account.title: Teikėjo paskyra
-component.connection_form.section.safety.title: Užklausų saugumas
-component.connection_form.save_label: Išsaugoti nustatymus
 component.connection_form.test_label: Išbandyti užklausą
-component.secrets_form.title: Slaptieji duomenys
-component.secrets_form.field.password.label: Slaptažodis
-component.secrets_form.field.password.help: Flow Steward saugo jį kaip projekto šifruojamą slaptą reikšmę.
-component.secrets_form.field.api_token.label: API raktas
-component.secrets_form.field.api_token.help: Neprivalomas bearer raktas, naudojamas išorinės API užklausoms.
-component.secrets_form.field.webhook_shared_secret.label: Webhook bendra slapta reikšmė
-component.secrets_form.field.webhook_shared_secret.help: Pavyzdinė teikėjo pusės slapta reikšmė; atgalinio iškvietimo registracija HMAC slaptą reikšmę išduoda atskirai.
-component.secrets_form.save_label: Išsaugoti slaptuosius duomenis
-component.external_request_form.title: Išorinės API užklausos pavyzdys
-component.external_request_form.description: Pagal numatymą veikia imitacijos režimu. Prieš tikras užklausas išjunkite imitacijos režimą ir įtraukite HTTPS serverį į leidžiamų sąrašą.
-component.external_request_form.field.resource_id.label: Ištekliaus ID
-component.external_request_form.field.perform_live_request.label: Atlikti tikrą užklausą
-component.external_request_form.test_label: Išbandyti išorinę užklausą
-component.connection_status.title: Ryšio būsena
+component.connection_form.field.password.label: Slaptažodis
+component.connection_form.field.password.help: Flow Steward saugo jį kaip projekto šifruojamą slaptą reikšmę.
+component.connection_form.field.api_token.label: API raktas
+component.connection_form.field.api_token.help: Neprivalomas bearer raktas, naudojamas išorinės API užklausoms.
+component.connection_form.field.resource_id.label: Ištekliaus ID
+component.connection_form.field.perform_live_request.label: Atlikti tikrą užklausą
 page.artifacts.title: Demonstraciniai artefaktai
 page.artifacts.description: Pridėtos demonstracinės darbo eigos, agentai ir įrankiai.
 component.artifacts_overview.title: Artefaktų paketas
@@ -136,3 +125,5 @@ component.review_notification_form.field.severity.option.critical.label: Kritin�
 component.review_notification_form.test_label: Siųsti pranešimą
 component.batch_score_form.field.records.field.tier.option.standard.label: Standartinis
 component.batch_score_form.field.records.field.tier.option.priority.label: Prioritetinis
+component.connection_form.description: Išsaugokite šio projekto ryšį, tada išbandykite pasirinktą išsaugotą ryšį. Įkėlę puslapį iš naujo, išsaugotoje eilutėje pasirinkite Redaguoti.
+component.connection_form.field.perform_live_request.help: Naudojamas pasirinktas išsaugotas ryšys. Tikroms užklausoms išjunkite imitacijos režimą ir įtraukite HTTPS serverį į leidžiamų sąrašą.

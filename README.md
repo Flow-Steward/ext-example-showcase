@@ -103,6 +103,29 @@ so the connection can never be authorized and a run stops at
 `connection_resolution_failed`. Copy the pattern with a real provider's
 authorization, token and revocation endpoints to run it.
 
+## Project Connection Settings
+
+Configuration uses the host-managed project connection form. Save the non-secret
+settings and optional password/API token there; Flow Steward owns the project
+connection record and encrypted secret storage. No extension action acknowledges
+an in-memory echo as a saved configuration or credential.
+
+After a full page reload, select **Edit** on the stored connection row to load
+its authoritative values. Save updates that selected connection. **Test Request**
+uses the selected saved connection, so save configuration changes before testing.
+Resource ID and Perform Live Request are request inputs and are never stored as
+connection configuration. Keep Mock Mode enabled and Perform Live Request off
+for the deterministic example. Host allowlists remain arrays of host strings.
+
+The v2 API connection schema matches the generic config schema, including
+Mock Mode, Default Priority, Notification Channel, and optional existing labels.
+The provider-side webhook secret field is removed; callback registration owns
+its separately issued HMAC secret.
+
+Bundle tests check native UI wiring, schema parity, and host-injected request
+configuration. Actual save/reload durability and project/install isolation need
+a running host acceptance test; the public SDK has no connection storage harness.
+
 ## Dataset Example
 
 Installation is global and creates no project, project connection, or artifact

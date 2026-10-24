@@ -13,30 +13,6 @@ queries:
   - internal_error
   handler:
     mode: extension
-- query_id: load_connection_settings
-  title: Load connection settings
-  description: Return example project configuration values for the settings form.
-  required_scopes:
-  - read:projects
-  result_fields:
-  - result.settings
-  error_codes:
-  - internal_error
-  handler:
-    mode: extension
-- query_id: connection_status
-  title: Connection status
-  description: Returns a redacted view of current connection state.
-  required_scopes:
-  - read:projects
-  result_fields:
-  - result.status
-  - result.configured
-  - result.secrets
-  error_codes:
-  - internal_error
-  handler:
-    mode: extension
 - query_id: list_demo_workflows
   title: List demo workflows
   description: Lists workflow artifacts included in this extension.

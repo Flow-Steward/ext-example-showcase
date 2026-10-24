@@ -75,25 +75,14 @@ component.connection_form.field.default_priority.option.low.label: Low
 component.connection_form.field.default_priority.option.medium.label: Medium
 component.connection_form.field.default_priority.option.high.label: High
 component.connection_form.field.notification_channel.label: Notification Channel
-component.connection_form.section.account.title: Provider Account
-component.connection_form.section.safety.title: Request Safety
-component.connection_form.save_label: Save Settings
 component.connection_form.test_label: Test Request
-component.secrets_form.title: Secrets
-component.secrets_form.field.password.label: Password
-component.secrets_form.field.password.help: Stored by Flow Steward as a project-scoped encrypted secret.
-component.secrets_form.field.api_token.label: API Token
-component.secrets_form.field.api_token.help: Optional bearer token used by external API calls.
-component.secrets_form.field.webhook_shared_secret.label: Webhook Shared Secret
-component.secrets_form.field.webhook_shared_secret.help: Provider-side example secret; callback registration issues its HMAC secret separately.
-component.secrets_form.save_label: Save Secrets
-component.external_request_form.title: External API Request Example
-component.external_request_form.description: Runs in mock mode by default. Disable mock mode and allowlist an HTTPS host before live calls.
-component.external_request_form.field.resource_id.label: Resource ID
-component.external_request_form.field.resource_id.placeholder: demo-resource-1
-component.external_request_form.field.perform_live_request.label: Perform Live Request
-component.external_request_form.test_label: Test External Request
-component.connection_status.title: Connection Status
+component.connection_form.field.password.label: Password
+component.connection_form.field.password.help: Stored by Flow Steward as a project-scoped encrypted secret.
+component.connection_form.field.api_token.label: API Token
+component.connection_form.field.api_token.help: Optional bearer token used by external API calls.
+component.connection_form.field.resource_id.label: Resource ID
+component.connection_form.field.resource_id.placeholder: demo-resource-1
+component.connection_form.field.perform_live_request.label: Perform Live Request
 page.artifacts.title: Demo Artifacts
 page.artifacts.description: Bundled demo workflows, agents, and tools.
 component.artifacts_overview.title: Artifact Bundle
@@ -138,3 +127,5 @@ component.review_notification_form.field.severity.option.critical.label: Critica
 component.review_notification_form.test_label: Send Notification
 component.batch_score_form.field.records.field.tier.option.standard.label: Standard
 component.batch_score_form.field.records.field.tier.option.priority.label: Priority
+component.connection_form.description: Save this project's connection, then test the selected saved connection. After reloading, select Edit on its stored row.
+component.connection_form.field.perform_live_request.help: Uses the selected saved connection. Mock Mode must be disabled and the HTTPS host allowlisted for live calls.

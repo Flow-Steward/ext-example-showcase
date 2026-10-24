@@ -39,7 +39,6 @@ DEMO_TOOLS = _artifact_catalog("tools", id_key="tool_id", detail_key="coverage")
 
 CONTRACT_OPERATIONS: list[dict[str, str]] = [
     {"operation_id": "test_external_request", "operation_kind": "source"},
-    {"operation_id": "save_connection_settings", "operation_kind": "action"},
     {"operation_id": "send_review_notification", "operation_kind": "human_channel"},
     {"operation_id": "batch_score_records", "operation_kind": "bulk_action"},
     {"operation_id": "run_demo_tool", "operation_kind": "action"},

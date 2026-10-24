@@ -7,38 +7,83 @@ connection_types:
     additionalProperties: false
     required:
     - base_url
+    - username
     properties:
       base_url:
         type: string
         format: uri
-        title: Base URL
-        description: HTTPS base URL for the external provider.
+        title: External API base URL
+        description: HTTPS endpoint for the provider account. Live requests are blocked unless the host is allowlisted.
+        default: https://api.example.test
       username:
         type: string
+        minLength: 1
         title: Username
-        description: Non-secret account identifier for the provider.
+        description: Non-secret provider account name.
       tenant:
         type: string
         title: Tenant
+        description: Optional provider tenant or workspace key.
       allowed_hosts:
         type: array
         title: Allowed hosts
+        description: Host allowlist used before any optional live external API request.
+        items:
+          type: string
+          minLength: 1
+        default:
+        - api.example.test
+      mock_mode:
+        type: boolean
+        title: Mock mode
+        description: Keep enabled for deterministic local tests and demos.
+        default: true
+      default_priority:
+        type: string
+        title: Default priority
+        enum:
+        - low
+        - medium
+        - high
+        default: medium
+      notification_channel:
+        type: string
+        title: Notification channel
+        description: Named project channel used by notification examples.
+        default: showcase-review
+      labels:
+        type: array
+        title: Labels
         items:
           type: string
         default:
-        - api.example.test
+        - example
+        - showcase
+
+    allOf:
+    - if:
+        properties:
+          mock_mode:
+            const: false
+        required:
+        - mock_mode
+      then:
+        required:
+        - allowed_hosts
   secret_schema:
     type: object
     additionalProperties: false
     properties:
       password:
         type: string
+        minLength: 1
         title: Password
-        description: Stored as an encrypted project connection secret by Flow Steward.
+        description: Provider password. Flow Steward stores submitted secret values through project-scoped secret storage.
       api_token:
         type: string
+        minLength: 1
         title: API token
-        description: Optional bearer token for provider API calls.
+        description: Optional bearer token for external API calls.
   capabilities:
     test_connection: true
     live_request: true

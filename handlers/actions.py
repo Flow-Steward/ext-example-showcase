@@ -20,7 +20,6 @@ from handlers.common import (
     as_text,
     fail,
     ok,
-    redacted_secret_refs,
 )
 
 MAX_EXTERNAL_RESPONSE_BYTES = 65536
@@ -161,41 +160,6 @@ def _perform_external_get(url: str, token: str = "") -> dict[str, Any]:  # nosec
             "external_effect_status": "failed",
             "provider_error_code": "external_request_failed",
         }
-
-
-def save_connection_settings(action: dict[str, Any]) -> dict[str, Any]:
-    payload = action_input(action)
-    values = as_dict(payload.get("values")) or payload
-    saved_config = {
-        "base_url": as_text(values.get("base_url"), f"https://{DEFAULT_ALLOWED_HOST}"),
-        "username": as_text(values.get("username")),
-        "tenant": as_text(values.get("tenant")),
-        "allowed_hosts": sorted(_allowed_hosts(values)),
-        "mock_mode": bool(values.get("mock_mode", True)),
-        "default_priority": as_text(values.get("default_priority"), "medium"),
-        "notification_channel": as_text(values.get("notification_channel"), "showcase-review"),
-    }
-    return ok(
-        {
-            "status": "saved",
-            "saved_config": saved_config,
-            "secret_refs": redacted_secret_refs(payload),
-        },
-        reload=["connection_status", "provider_health"],
-        summary={"status": "saved", "configured": bool(saved_config["username"])},
-    )
-
-
-def save_secrets(action: dict[str, Any]) -> dict[str, Any]:
-    payload = action_input(action)
-    return ok(
-        {
-            "status": "saved",
-            "secret_refs": redacted_secret_refs(payload),
-        },
-        reload=["connection_status", "provider_health"],
-        summary={"status": "saved", "secret_values": "redacted"},  # nosec B105
-    )
 
 
 def test_external_request(action: dict[str, Any]) -> dict[str, Any]:
@@ -349,8 +313,6 @@ def oauth_profile(action: dict[str, Any]) -> dict[str, Any]:
 
 ACTION_HANDLERS = {
     "invoke_tool": invoke_tool,
-    "save_connection_settings": save_connection_settings,
-    "save_secrets": save_secrets,
     "test_external_request": test_external_request,
     "send_review_notification": send_review_notification,
     "batch_score_records": batch_score_records,
