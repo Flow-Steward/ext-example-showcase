@@ -59,7 +59,7 @@ component.example_showcase_overview.content: |-
 component.provider_health.title: Vykdymo būklė
 component.showcase_stats.title: Kas įtraukta
 component.callback_setup.title: Atgalinio iškvietimo registravimas
-component.callback_setup.description: Užregistruoja bendrą /webhook/extensions/flowsteward_example_showcase/events atgalinį iškvietimą teikėjo įvykiams.
+component.callback_setup.description: Užregistruoja pasirašytą /webhook/extensions/flowsteward.example-showcase/events/<token> atgalinį iškvietimą teikėjo įvykiams.
 page.configuration.title: Nustatymai
 page.configuration.description: Projekto nustatymai, šifruojami slaptieji duomenys ir išorinės API užklausos pavyzdys.
 component.connection_form.title: Ryšio nustatymai

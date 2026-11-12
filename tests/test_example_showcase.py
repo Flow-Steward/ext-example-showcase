@@ -370,6 +370,9 @@ def test_dataset_workflow_uses_project_connection_and_declares_toolbox_dependenc
     ]
     assert dataset["metadata_jsonb"]["connection_resolution"] == "project_scope"
     assert "connection_id" not in dataset
+    # The bundle ships no sales data: the description names the project's connection.
+    assert "fixture" not in workflow["description"]
+    assert "PostgreSQL connection" in workflow["description"]
     dataset_step = workflow["steps"][0]["override"]["dataset_query"]
     assert "connection_id" not in dataset_step
     assert workflow["settings"]["callable"]["expected_inputs"] == [
@@ -996,6 +999,201 @@ def test_batch_action_exposes_a_form_reachable_partial_failure() -> None:
         {"index": 1, "id": "rejected-record", "error": "inactive_record"}
     ]
     assert batch["summary"] == {"scored": 1, "failed": 1}
+
+
+# A callback runs outside any workflow run: all four execution-scope keys are null.
+NO_STEP_SCOPE = {"group_id": None, "for_each_id": None, "step_id": None, "step_execution_id": None}
+
+
+def _invoke_refused(payload: dict) -> dict:
+    """Run main.py on a request it must refuse (exit 2) and return the response."""
+    proc = subprocess.run(
+        [sys.executable, str(BUNDLE_ROOT / "main.py")],
+        cwd=str(BUNDLE_ROOT),
+        input=json.dumps(_envelope(payload, NO_STEP_SCOPE)),
+        env=_bundle_env(),
+        capture_output=True,
+        text=True,
+        timeout=10,
+        check=False,
+    )
+    assert proc.returncode == 2, proc.stderr or proc.stdout
+    response = json.loads(proc.stdout)
+    assert response["ok"] is False
+    return response
+
+
+def _callback_delivery(body: Any, **callback_overrides: Any) -> dict:
+    """The action request Core builds for a delivery it has already authenticated."""
+    raw_body = json.dumps(body).encode("utf-8")
+    callback = {
+        "extension_id": "flowsteward.example-showcase",
+        "callback_id": "events",
+        "authenticated": True,
+        "callback_url": (
+            "https://fs.example.test/webhook/extensions/flowsteward.example-showcase/"
+            "events/<redacted>"
+        ),
+        "project_id": "proj_demo",
+        "connection_id": "",
+        **callback_overrides,
+    }
+    return {
+        "mode": "action",
+        "action": {
+            "action_id": "receive_provider_event",
+            "input": {
+                "callback": callback,
+                "request": {
+                    "method": "POST",
+                    "path": "/webhook/extensions/flowsteward.example-showcase/events/<redacted>",
+                    "headers": {
+                        "content-type": "application/json",
+                        "x-example-showcase-signature": "<redacted>",
+                        "x-example-showcase-timestamp": "1790000000",
+                        "x-example-showcase-delivery": "dlv-0001",
+                    },
+                    "query": {},
+                    "json": body if isinstance(body, dict) else {},
+                    "body_text": raw_body.decode("utf-8"),
+                    "raw_body_base64": base64.b64encode(raw_body).decode("ascii"),
+                },
+            },
+        },
+    }
+
+
+def test_events_callback_is_declared_signed_and_routed_to_a_declared_action() -> None:
+    manifest = yaml.safe_load((BUNDLE_ROOT / "extension.yaml").read_text(encoding="utf-8"))
+    actions = yaml.safe_load(
+        (BUNDLE_ROOT / "ui" / "actions" / "actions.yaml").read_text(encoding="utf-8")
+    )
+    action_ids = {item["action_id"] for item in actions["actions"]}
+    component = yaml.safe_load(
+        (BUNDLE_ROOT / "ui" / "components" / "callback_setup.yaml").read_text(encoding="utf-8")
+    )
+
+    callbacks = {item["callback_id"]: item for item in manifest["callbacks"]}
+    assert set(callbacks) == {"events"}
+    events = callbacks["events"]
+    assert events["purpose"] == "inbound_events"
+    assert events["methods"] == ["POST"]
+    assert events["action_id"] == "receive_provider_event"
+    assert events["action_id"] in action_ids
+    # The setup panel registers per project and sends no connection.
+    assert events["connection_scoped"] is False
+    auth = events["auth"]
+    assert auth["type"] == "hmac_sha256"
+    for key in ("signature_header", "timestamp_header", "delivery_id_header"):
+        assert auth[key].startswith("X-Example-Showcase-")
+    assert 30 <= auth["max_age_seconds"] <= 3600
+
+    # The panel names a declared callback, and the setup actions it calls exist.
+    assert component["callback_id"] in callbacks
+    assert component["configure_action_id"] in action_ids
+    assert component["status_action_id"] in action_ids
+    assert "flowsteward.example-showcase/events" in component["description"]
+
+
+def test_provider_event_delivery_returns_a_bounded_summary() -> None:
+    body = {
+        "event_type": "external.comment.received",
+        "event_id": "evt_123",
+        "source": "support",
+        "comment": "A customer asked for a refund.",
+    }
+    payload = _invoke(_callback_delivery(body), scope=NO_STEP_SCOPE)
+
+    assert payload["ok"] is True
+    result = payload["result"]
+    assert result["status"] == "received"
+    assert result["project_id"] == "proj_demo"
+    assert result["event"] == {
+        "event_type": "external.comment.received",
+        "event_id": "evt_123",
+        "source": "support",
+        "keys": ["comment", "event_id", "event_type", "source"],
+        "key_count": 4,
+    }
+    raw_body = json.dumps(body).encode("utf-8")
+    assert result["delivery"] == {
+        "delivery_id": "dlv-0001",
+        "body_bytes": len(raw_body),
+        "body_sha256": hashlib.sha256(raw_body).hexdigest(),
+    }
+    assert payload["summary"] == {"status": "received", "event_type": "external.comment.received"}
+    # Neither the event text nor the signature header comes back.
+    assert "refund" not in json.dumps(payload)
+    assert "signature" not in json.dumps(payload).lower()
+
+
+def test_provider_event_summary_stays_bounded_for_a_large_event() -> None:
+    body = {"event_type": "x" * 500, **{f"field_{index:03d}": index for index in range(60)}}
+    payload = _invoke(_callback_delivery(body), scope=NO_STEP_SCOPE)
+
+    assert payload["ok"] is True
+    event = payload["result"]["event"]
+    assert len(event["event_type"]) == 128
+    assert len(event["keys"]) == 20
+    assert event["key_count"] == 61
+
+
+@pytest.mark.parametrize(
+    ("request_payload", "error_code"),
+    [
+        (_callback_delivery({"event_type": "a"}, authenticated=False), "unexpected_callback"),
+        (_callback_delivery({"event_type": "a"}, callback_id="other"), "unexpected_callback"),
+        (_callback_delivery(["not", "an", "object"]), "invalid_payload"),
+        (_callback_delivery({"source": "support"}), "invalid_payload"),
+    ],
+)
+def test_provider_event_refuses_a_delivery_it_cannot_read(
+    request_payload: dict, error_code: str
+) -> None:
+    assert _invoke_refused(request_payload)["error_code"] == error_code
+
+
+def test_webhook_setup_actions_never_echo_the_callback_url_or_secret() -> None:
+    callback_url = (
+        "https://fs.example.test/webhook/extensions/flowsteward.example-showcase/events/tok"
+    )
+    payload = _invoke(
+        {
+            "mode": "action",
+            "action": {
+                "action_id": "configure_webhook",
+                "input": {
+                    "runtime": {"fake_mode": False},
+                    "callback_url": callback_url,
+                    "callback_secret": "registration-signing-secret",
+                },
+            },
+        },
+        scope=NO_STEP_SCOPE,
+    )
+    assert payload["ok"] is True
+    assert payload["result"]["url_configured"] is True
+    assert payload["result"]["provider_mode"] == "mock"
+    assert callback_url not in json.dumps(payload)
+    assert "registration-signing-secret" not in json.dumps(payload)
+
+    def _configure(action_input: dict) -> dict:
+        return {
+            "mode": "action",
+            "action": {"action_id": "configure_webhook", "input": action_input},
+        }
+
+    missing_url = _invoke_refused(_configure({"callback_secret": "s"}))
+    assert missing_url["error_code"] == "callback_url_required"
+    missing_secret = _invoke_refused(_configure({"callback_url": callback_url}))
+    assert missing_secret["error_code"] == "callback_secret_required"
+
+    status = _invoke(
+        {"mode": "action", "action": {"action_id": "get_webhook_status", "input": {}}},
+        scope=NO_STEP_SCOPE,
+    )
+    assert status["ok"] is True
+    assert status["result"]["pending_update_count"] == 0
 
 
 @pytest.mark.parametrize(

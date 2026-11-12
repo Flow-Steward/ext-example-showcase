@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import base64
+import binascii
 import hashlib
 import importlib
 import json
@@ -24,6 +26,11 @@ from handlers.common import (
 
 MAX_EXTERNAL_RESPONSE_BYTES = 65536
 DEFAULT_ALLOWED_HOST = "api.example.test"
+# The callback declared under `callbacks:` in extension.yaml.
+CALLBACK_ID = "events"
+DELIVERY_ID_HEADER = "X-Example-Showcase-Delivery"
+MAX_EVENT_TEXT = 128
+MAX_EVENT_KEYS = 20
 RETRYABLE_HTTP_STATUSES = frozenset({408, 429, 500, 502, 503, 504})
 RETRY_FACT_KEYS = frozenset(
     {
@@ -311,8 +318,108 @@ def oauth_profile(action: dict[str, Any]) -> dict[str, Any]:
     )
 
 
+def _header(headers: dict[str, Any], name: str) -> str:
+    wanted = name.lower()
+    for key, value in headers.items():
+        if str(key).lower() == wanted:
+            return as_text(value)
+    return ""
+
+
+def _bounded(value: Any, limit: int = MAX_EVENT_TEXT) -> str:
+    return as_text(value)[:limit]
+
+
+def receive_provider_event(action: dict[str, Any]) -> dict[str, Any]:
+    """Handle one delivery on the ``events`` callback.
+
+    Core has already checked the HMAC signature, the timestamp window and the
+    delivery id before this runs, so the handler only reads the event. It
+    returns a bounded summary: never the headers (they carry the signature),
+    never the raw body, and at most ``MAX_EVENT_KEYS`` top-level keys.
+    """
+    envelope = as_dict(action.get("input"))
+    callback = as_dict(envelope.get("callback"))
+    request = as_dict(envelope.get("request"))
+    if (
+        as_text(callback.get("callback_id")) != CALLBACK_ID
+        or callback.get("authenticated") is not True
+    ):
+        return fail(
+            "unexpected_callback",
+            "Only authenticated deliveries on the events callback are handled.",
+        )
+    if as_text(request.get("method")).upper() != "POST":
+        return fail("invalid_payload", "Provider events arrive as POST requests.")
+    event = request.get("json")
+    if not isinstance(event, dict) or not event:
+        return fail("invalid_payload", "The delivery body must be a non-empty JSON object.")
+    event_type = _bounded(event.get("event_type") or event.get("type"))
+    if not event_type:
+        return fail("invalid_payload", "The provider event must name its event_type.")
+    try:
+        raw_body = base64.b64decode(as_text(request.get("raw_body_base64")), validate=True)
+    except (binascii.Error, ValueError):
+        raw_body = b""
+    headers = as_dict(request.get("headers"))
+    return ok(
+        {
+            "status": "received",
+            "project_id": as_text(callback.get("project_id")),
+            "event": {
+                "event_type": event_type,
+                "event_id": _bounded(event.get("event_id") or event.get("id")),
+                "source": _bounded(event.get("source")),
+                "keys": sorted(_bounded(key) for key in event)[:MAX_EVENT_KEYS],
+                "key_count": len(event),
+            },
+            "delivery": {
+                "delivery_id": _bounded(_header(headers, DELIVERY_ID_HEADER)),
+                "body_bytes": len(raw_body),
+                "body_sha256": hashlib.sha256(raw_body).hexdigest(),
+            },
+        },
+        summary={"status": "received", "event_type": event_type},
+    )
+
+
+def configure_webhook(action: dict[str, Any]) -> dict[str, Any]:
+    """Hand the callback URL and signing secret to the provider.
+
+    A real extension calls the provider's "set webhook" API here with
+    ``callback_url`` and ``callback_secret``. The example provider is a mock, so
+    nothing is sent or stored, and neither value is echoed back.
+    """
+    payload = as_dict(action.get("input"))
+    if not as_text(payload.get("callback_url")):
+        return fail("callback_url_required", "Core did not pass the callback URL.")
+    if not as_text(payload.get("callback_secret")):
+        return fail("callback_secret_required", "Core did not pass the callback signing secret.")
+    return ok(
+        {
+            "url_configured": True,
+            "provider_mode": "mock",
+            "signing": "hmac_sha256",
+            "pending_update_count": 0,
+        },
+        summary={"url_configured": True, "provider_mode": "mock"},
+    )
+
+
+def get_webhook_status(action: dict[str, Any]) -> dict[str, Any]:
+    """Report the provider-side webhook status; the mock provider keeps no state."""
+    _ = action
+    return ok(
+        {"url_configured": True, "provider_mode": "mock", "pending_update_count": 0},
+        summary={"url_configured": True, "provider_mode": "mock"},
+    )
+
+
 ACTION_HANDLERS = {
     "invoke_tool": invoke_tool,
+    "receive_provider_event": receive_provider_event,
+    "configure_webhook": configure_webhook,
+    "get_webhook_status": get_webhook_status,
     "test_external_request": test_external_request,
     "send_review_notification": send_review_notification,
     "batch_score_records": batch_score_records,

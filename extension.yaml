@@ -2,7 +2,7 @@ manifest_version: 2
 lifecycle: {data_schema_version: 1, data_migrations: []}
 extension_id: flowsteward.example-showcase
 kind: tool_provider
-version: 1.2.4
+version: 1.2.5
 display_name: Example Showcase Extension
 description: |-
   Example Showcase is an SDK reference bundle for developers building Flow Steward extensions. Explore project connection forms, encrypted secrets, declarative pages, queries, actions, workflow trigger declarations and packaged workflows, agents, tools, datasets and saved queries. Example operations demonstrate an external status request, record scoring with partial failures and reusable tool invocation.
@@ -134,6 +134,23 @@ workflow_triggers:
         value: medium
       - label: High
         value: high
+# A provider posts events to /webhook/extensions/flowsteward.example-showcase/events/<token>.
+# Core checks the HMAC-SHA256 signature over "<timestamp>.<delivery-id>.<raw-body>"
+# with the registration secret, refuses a delivery older than max_age_seconds
+# or a repeated delivery id, and only then runs receive_provider_event.
+callbacks:
+- callback_id: events
+  purpose: inbound_events
+  methods:
+  - POST
+  action_id: receive_provider_event
+  connection_scoped: false
+  auth:
+    type: hmac_sha256
+    signature_header: X-Example-Showcase-Signature
+    timestamp_header: X-Example-Showcase-Timestamp
+    delivery_id_header: X-Example-Showcase-Delivery
+    max_age_seconds: 300
 entrypoint:
   mode: subprocess
   command:

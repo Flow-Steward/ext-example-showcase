@@ -1,8 +1,8 @@
 workflow_id: demo_dataset_open_orders
-version: 1.2.0
+version: 1.2.5
 display_name: 'Demo: Dataset Open Orders'
-description: Runs a saved dataset query against the bundled sales fixture and then reuses the returned
-  rows in a follow-up step.
+description: Runs a saved dataset query that reads open orders from the orders table through the project's
+  own PostgreSQL connection (MCP Toolbox) and then reuses the returned rows in a follow-up step.
 enabled: true
 trigger:
   confidence_threshold: 0.0

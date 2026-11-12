@@ -1,7 +1,7 @@
 schema_version: extension_descriptor_v1
 lifecycle: {data_schema_version: 1, data_migrations: []}
 extension_id: flowsteward.example-showcase
-release_version: 1.2.4
+release_version: 1.2.5
 extension_type: service_extension
 identity:
   display_name: Example Showcase Extension
@@ -18,7 +18,7 @@ identity:
   - workflows
 vendor:
   vendor_name: Flow Steward
-  support_url: https://github.com/vasily-piksis/agentic-team/issues
+  support_url: https://github.com/Flow-Steward/ext-example-showcase/issues
 listing:
   visibility: public_reference
   category: developer_examples

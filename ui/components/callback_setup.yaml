@@ -2,4 +2,6 @@ component_id: callback_setup
 type: callback_setup
 title: Callback Registration
 callback_id: events
-description: Registers the generic /webhook/extensions/flowsteward_example_showcase/events callback for provider events.
+configure_action_id: configure_webhook
+status_action_id: get_webhook_status
+description: Registers the signed /webhook/extensions/flowsteward.example-showcase/events/<token> callback for provider events.

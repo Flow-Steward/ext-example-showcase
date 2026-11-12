@@ -59,7 +59,7 @@ component.example_showcase_overview.content: |-
 component.provider_health.title: Runtime Health
 component.showcase_stats.title: Included Coverage
 component.callback_setup.title: Callback Registration
-component.callback_setup.description: Registers the generic /webhook/extensions/flowsteward_example_showcase/events callback for provider events.
+component.callback_setup.description: Registers the signed /webhook/extensions/flowsteward.example-showcase/events/<token> callback for provider events.
 page.configuration.title: Configuration
 page.configuration.description: Project-scoped config, encrypted secrets, and external API request example.
 component.connection_form.title: Connection Settings

@@ -22,6 +22,21 @@ that speaks this contract; an older Core does not run it.
 
 Logo: `icon.png` at the bundle root (the Flow Steward wave mark, PNG, 128x128).
 
+## What's New in 1.2.5
+
+- The `events` callback is now declared under `callbacks:` in
+  `extension.yaml` (HMAC-SHA256 signed, project-scoped) and routed to the new
+  `receive_provider_event` action, so a provider delivery reaches the
+  extension end to end. The **Callback Registration** panel's
+  **Create and Configure** and **Refresh Status** buttons now call the new
+  `configure_webhook` and `get_webhook_status` actions (a mock provider). See
+  [Workflow trigger, event bindings and callbacks](#workflow-trigger-event-bindings-and-callbacks).
+- The panel shows the real callback path,
+  `/webhook/extensions/flowsteward.example-showcase/events/<token>`.
+- `demo_dataset_open_orders` no longer claims a bundled sales fixture: it
+  reads the `orders` table through the project's own PostgreSQL connection.
+- The descriptor's `support_url` points at this repository's issues.
+
 ## What's New in 1.2.1
 
 The hook example now describes a hook as a place where a project adds its own
@@ -57,18 +72,210 @@ See [Hooks For Extension Authors](#hooks-for-extension-authors) and
 | Contract v2 builder operations | `contracts/*.yaml` |
 | Demo workflows, agents, skills, tools, datasets, saved queries | `artifacts/*/*.yaml` |
 | External API integration pattern | `handlers/actions.py::test_external_request` |
+| Signed provider callback | `callbacks` in `extension.yaml`, `handlers/actions.py::receive_provider_event` |
 | OAuth2 connection-scoped credentials | `contracts/connection_types.yaml`, `handlers/actions.py::oauth_profile` |
 | Health check | `health.py` |
 | Interface translations | `locales/en.yaml`, `locales/lt.yaml` |
+| Logo | `icon.png` |
+| Network destinations | `egress` in `extension.yaml` |
+| Tests, smoke check, packaging | `tests/`, `.github/scripts/`, `release/checks.py` |
+
+## Feature Tour
+
+Each part below names the files to read. Install the extension, open it under
+**Extensions**, and compare what you see with the files.
+
+### Manifest
+
+`extension.yaml` declares a `tool_provider` with the features `tool`, `action`,
+`query`, `workflow_trigger` and `artifact_bundle`, and:
+
+- `runtime.contract_version: extension_host_v2`, required by Core;
+- `egress`: the default API host `api.example.test` plus the `base_url` field
+  of the `example_showcase_api` connection, so the administrator sees where the
+  extension connects;
+- `required_scopes`, `machine_auth` and `account_scope` (project-scoped
+  configuration), which marketplace validation requires;
+- an optional dependency on `flowsteward.telegram` (`required: false`), to show
+  extension-to-extension dependency metadata;
+- `callbacks`: the signed `events` callback a provider posts to (see
+  [Workflow trigger, event bindings and callbacks](#workflow-trigger-event-bindings-and-callbacks));
+- the UI, query and action manifests, and the six Contract v2 files.
+
+### UI pages
+
+`ui/ui_manifest.yaml` lists four pages; each page lists its components from
+`ui/components/`:
+
+| Page | Components |
+| --- | --- |
+| **Overview** (`overview`) | `markdown` introduction, `health_panel` bound to `provider_health`, `stats_row` with artifact counts from the same query, `callback_setup` panel |
+| **Configuration** (`configuration`) | `connection_form`: the host-managed project connection form for `example_showcase_api` (settings, secrets, and **Test Request** through `test_external_request`); see [Project Connection Settings](#project-connection-settings) |
+| **Operations** (`operations`) | `markdown` overview, `grid` of Contract v2 operations (`operation_contracts`), `form` with a repeater that runs `batch_score_records`, `form` that runs `send_review_notification` |
+| **Demo Artifacts** (`artifacts`) | `markdown` overview and three `grid`s: workflows, agents, tools |
+
+### Queries
+
+Declared in `ui/queries/queries.yaml`, implemented in `handlers/queries.py`:
+
+| Query | Returns |
+| --- | --- |
+| `provider_health` | Runtime health, project scope status and artifact counts |
+| `list_demo_workflows`, `list_demo_agents`, `list_demo_tools` | The artifacts this extension publishes |
+| `list_example_resources` | Rows for a resource picker in a workflow step form |
+| `operation_contracts` | The Contract v2 operations, for the Operations grid |
+
+### Actions
+
+Declared in `ui/actions/actions.yaml`, implemented in `handlers/actions.py`.
+None mutates the platform (`mutates_platform: false`).
+
+| Action | Visible in workflows | Shows |
+| --- | --- | --- |
+| `test_external_request` | Yes | A safe outbound request: mock mode by default; live mode needs HTTPS, an `allowed_hosts` match and connection secrets |
+| `send_review_notification` | Yes | The output shape of a notification dispatch |
+| `batch_score_records` | Yes | A bulk action with per-record results and partial failure |
+| `run_demo_tool` | Yes | Running a bundled deterministic tool |
+| `invoke_tool` | Yes | The action behind the published tool artifacts; may write a file artifact through a host grant |
+| `oauth_profile` | Yes | Receiving the OAuth access token of the selected connection |
+| `receive_provider_event` | No | Handling a signed delivery on the `events` callback: returns a bounded summary (event type and id, at most 20 top-level keys, body size and SHA-256), never the headers or the body |
+| `configure_webhook` | No | Handing the callback URL and signing secret to the provider; the example provider is a mock, so nothing is sent or echoed |
+| `get_webhook_status` | No | The provider-side webhook status for the **Refresh Status** button (mock) |
+
+### Workflow operations (Extension tools step)
+
+An action shows up under **Extension tools** in the workflow builder because
+it is `workflow_visible: true` **and** `contracts/operation_manifest.yaml`
+declares an operation with the same id. The showcase covers each operation
+kind: `test_external_request` is a `source`, `send_review_notification` a
+`human_channel`, `batch_score_records` a `bulk_action` (`supports_batch`,
+batch size 25, at most 100, input field `records`), and `run_demo_tool`,
+`invoke_tool`, `oauth_profile` are `action`s.
+
+- `contracts/step_ui_manifest.yaml`: the step form fields for each operation.
+- `contracts/resource_query_manifest.yaml`: resource pickers backed by
+  `list_example_resources` and the artifact lists.
+- `contracts/connection_types.yaml`: `example_showcase_api` (API settings and
+  secrets) and `example_showcase_oauth_account` (OAuth2 authorization code with
+  PKCE).
+- `contracts/artifact_policies.yaml`: the files an operation may read or write.
+
+This is also how you add your own code to workflows: Flow Steward has no code
+step, so custom logic is an extension action exposed this way.
+
+### Settings and secrets
+
+- `schemas/config.schema.yaml`: non-secret settings (`base_url`, `username`,
+  `tenant`, `allowed_hosts`, `mock_mode`, `default_priority`,
+  `notification_channel`, `labels`). Turning `mock_mode` off makes
+  `allowed_hosts` required, through `if`/`then` in the schema.
+- `schemas/secrets.schema.yaml`: password and API token. Flow Steward stores
+  them in the project connection's encrypted secret storage; the callback
+  signing secret is issued by callback registration, not stored here.
+- `schemas/subscriptions.schema.yaml`: which events to subscribe to, a
+  severity filter and an optional workflow filter.
+
+### Workflow trigger, event bindings and callbacks
+
+- `workflow_triggers` in `extension.yaml` adds the trigger type
+  **Example Showcase Event** (`example_showcase_event`) to the workflow
+  trigger catalog, with its own config form (source, signature requirement,
+  default priority). It maps a provider event (`external.comment.received`)
+  into a workflow run.
+- `contracts/event_bindings.yaml` binds platform events to operations:
+  `approval.requested` to `send_review_notification`, `job.completed` to
+  `test_external_request`, `interaction.received` to `run_demo_tool`.
+- `callbacks:` in `extension.yaml` declares the `events` callback:
+  `purpose: inbound_events`, `methods: [POST]`, `connection_scoped: false`
+  (one registration per project), `action_id: receive_provider_event`, and
+  `auth.type: hmac_sha256` with the headers `X-Example-Showcase-Signature`,
+  `X-Example-Showcase-Timestamp` and `X-Example-Showcase-Delivery` and
+  `max_age_seconds: 300`. A provider posts to
+  `/webhook/extensions/flowsteward.example-showcase/events/<token>`. Core checks
+  the signature, the timestamp window and the delivery id (see
+  [Notes For Authors](#notes-for-authors)) before it runs the action, and hands
+  the action the parsed JSON body, the raw body and the headers with the
+  signature redacted.
+- `ui/components/callback_setup.yaml` shows the registration panel for that
+  callback. **Create and Configure** creates the project's registration and
+  calls `configure_webhook` with the callback URL and its signing secret;
+  **Refresh Status** calls `get_webhook_status`. A real extension calls its
+  provider's webhook API in those two actions; here they are a mock. Create and
+  Configure needs `FS_PUBLIC_BASE_URL` set to a non-localhost address, because
+  Core never hands a provider a URL built from request headers.
+
+### Tools, workflows, agents and skills
+
+`extension-descriptor.yaml` publishes everything under `artifacts/`:
+
+- **Tools** (`artifacts/tools/`): `demo_content_tools`, `demo_weather_tools`,
+  `demo_product_catalog_tools`. Their functions live in
+  `demo_workflow_tools.py`, run through the `invoke_tool` action, and are
+  deterministic; `demo_store_product_catalog_artifact` writes a CSV file
+  artifact.
+- **Workflows** (`artifacts/workflows/`), 14 of them:
+
+  | Workflow | Shows |
+  | --- | --- |
+  | `demo_weather_city_brief` | If, Switch, HTTP request (a no-key Open-Meteo forecast), Extension tools, Stop · success |
+  | `demo_weather_summary_child`, `demo_travel_day_planner` | A callable child workflow and Invoke workflow with output mapping |
+  | `demo_content_campaign_router` | Switch branches per content channel |
+  | `demo_parallel_launch_review` | Agent steps in parallel lanes, then a merge |
+  | `demo_product_catalog_enrichment` | CSV loading, For each validation, Batch, enrichment and a file artifact |
+  | `demo_dataset_open_orders` | A saved dataset query (see [Dataset Example](#dataset-example)) |
+  | `demo_incoming_webhook_router` | Routing fields of an incoming webhook |
+  | `demo_oauth_connection_binding` | A step whose OAuth connection is picked per project |
+  | `demo_expected_failure_guardrail` | A run that ends at Stop · fail on purpose |
+  | `demo_order_with_client_hook` | A hook ([Hooks For Extension Authors](#hooks-for-extension-authors)) |
+  | `demo_group_sequence_and_lanes`, `demo_for_each_collect_controls`, `demo_container_error_route` | Groups, For each controls and error routes ([Container Examples](#container-examples)) |
+
+- **Agents and skills** (`artifacts/agents/`, `artifacts/skills/`): five
+  agent/skill pairs used by the agent steps (support ticket classifier and
+  summarizer, launch copywriter, launch risk reviewer, change request risk
+  router).
+- **Datasets and saved queries**: `demo_sales_open_orders` and
+  `demo_open_orders_query`.
+
+### Health
+
+`health.py` loads `main.py` and each handler module and prints one check per
+file. The **Overview** page's health panel uses the `provider_health` query
+instead, which also reports configuration and artifact counts.
+
+### Dependencies and wheels
+
+The showcase imports only the Python standard library and the Flow Steward
+SDK, which the host provides, so `extension.yaml` has no `python_requirements`
+and the archive has no `wheels/`. `dev-wheels/` holds the SDK wheel that
+`requirements-dev.txt` installs for the tests; it is never packaged. An
+extension with third-party libraries must ship hash-pinned wheels for both
+Linux x86_64 and aarch64; see the Flow Steward guide *Build An Extension*,
+section *Python Dependencies And Wheel Distribution*.
+
+### Tests and scripts
+
+| File | Runs |
+| --- | --- |
+| `tests/test_example_showcase.py` | Manifest and descriptor, health and queries, the external request (mock and live), OAuth token, artifact grants, the batch action, the `events` callback and its setup actions, envelope refusal, logo, workflow model and the hook |
+| `tests/test_descriptor_compatibility.py` | The descriptor declares a minimum Flow Steward version |
+| `tests/test_demo_workflow_tools.py` | The deterministic tool functions |
+| `tests/test_showcase_release_checks.py` | The release-candidate checks |
+| `tests/test_vendored_wheels.py` | Platform markers on wheels pinned in `requirements-dev.txt` |
+| `.github/scripts/smoke_check.py` | Health plus representative queries and actions (repository tooling, not packaged) |
+| `.github/scripts/package_extension.py`, `.github/scripts/catalog_check.py` | Builds the archive the catalog publishes and checks it |
+| `release/checks.py` | Checks this bundle on a release candidate through the public API only |
 
 ## Structure
 
 ```text
-extensions/flowsteward_example_showcase/
+flowsteward_example_showcase/   # the folder name Flow Steward expects for this id
   extension.yaml              # local runtime manifest
   extension-descriptor.yaml   # import/distribution descriptor
+  icon.png                    # logo, required
   main.py                     # subprocess JSON envelope entrypoint
   health.py                   # health command
+  demo_workflow_tools.py      # deterministic tool functions
+  fixtures/                   # sample CSV for the product catalog demo
   handlers/                   # query/action routing
   schemas/                    # project config, secret, subscription schemas
   ui/                         # declarative extension UI
@@ -76,7 +283,10 @@ extensions/flowsteward_example_showcase/
   artifacts/                  # sole-source YAML artifact definitions
   locales/                    # interface translations, one flat YAML per language
   .github/scripts/smoke_check.py  # local executable smoke (repository tooling, not packaged)
+  release/                    # release-candidate checks over the public API
   tests/                      # bundle-level tests
+  requirements-dev.txt        # test dependencies
+  dev-wheels/                 # SDK wheel for tests (not packaged)
 ```
 
 ## Runtime Contract
@@ -315,10 +525,19 @@ languages and fall back to English.
 
 ## Validate
 
+Flow Steward finds an extension by its folder name: for this id it must be
+`flowsteward_example_showcase`. Copy this repository into a Flow Steward
+Development checkout as `extensions/flowsteward_example_showcase/`, then run
+from the checkout:
+
 ```bash
-docker compose -f infra/docker/docker-compose.yaml -f infra/docker/docker-compose.dev.yaml run --rm fs-app \
-  python -m core.entrypoints.cli extensions test flowsteward.example-showcase
+./flow-steward extensions validate flowsteward.example-showcase --root extensions --health
+./flow-steward extensions test flowsteward.example-showcase --root extensions
+./flow-steward extensions bundle flowsteward.example-showcase --root extensions --confirm
 ```
+
+Install the archive with **Extensions › Install extension from file**, or
+install the published release from **Extensions › Marketplace**.
 
 ## Notes For Authors
 
@@ -327,7 +546,9 @@ docker compose -f infra/docker/docker-compose.yaml -f infra/docker/docker-compos
 - Put passwords, API tokens, webhook shared secrets, and similar values in
   `schemas/secrets.schema.yaml`.
 - Sign callback deliveries with `HMAC-SHA256` over
-  `<unix-timestamp>.<delivery-id>.<raw-body>` using the registration secret.
+  `<unix-timestamp>.<delivery-id>.<raw-body>` using the registration secret,
+  and send the hex digest (optionally prefixed `sha256=`), the timestamp and
+  the delivery id in the headers the callback's `auth` names.
   The platform rejects signatures outside the declared five-minute window and
   atomically rejects a repeated delivery ID for the same registration.
 - Declare requirements in the schema, not in your extension code. A flat

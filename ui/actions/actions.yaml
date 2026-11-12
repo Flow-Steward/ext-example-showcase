@@ -90,3 +90,49 @@ actions:
   error_codes:
   - missing_access_token
   mutates_platform: false
+- action_id: receive_provider_event
+  workflow_visible: false
+  title: Receive provider event
+  description: Handles a signed delivery on the events callback and returns a bounded summary of it.
+  required_scopes:
+  - extension:invoke
+  handler:
+    mode: extension
+  result_fields:
+  - result.status
+  - result.event.event_type
+  - result.event.event_id
+  - result.delivery.delivery_id
+  - result.delivery.body_sha256
+  error_codes:
+  - invalid_payload
+  - unexpected_callback
+  mutates_platform: false
+- action_id: configure_webhook
+  workflow_visible: false
+  title: Configure webhook
+  description: Hands the events callback URL and signing secret to the provider; the example provider is a mock and stores nothing.
+  required_scopes:
+  - extension:invoke
+  handler:
+    mode: extension
+  result_fields:
+  - result.url_configured
+  - result.provider_mode
+  error_codes:
+  - callback_url_required
+  - callback_secret_required
+  mutates_platform: false
+- action_id: get_webhook_status
+  workflow_visible: false
+  title: Get webhook status
+  description: Reports the provider-side webhook status for the events callback (mock provider).
+  required_scopes:
+  - extension:invoke
+  handler:
+    mode: extension
+  result_fields:
+  - result.url_configured
+  - result.pending_update_count
+  error_codes: []
+  mutates_platform: false
