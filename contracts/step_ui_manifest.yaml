@@ -78,5 +78,5 @@ forms:
     label: Arguments
     required: false
     help_text: JSON object containing arguments accepted by the chosen bundled callable. For demo_measure_text,
-      supply text.
+      supply value.
     placeholder: '{"value":"Launch update"}'

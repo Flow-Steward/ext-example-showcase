@@ -56,7 +56,7 @@ Invokes a bundled demo tool and may publish an allowed run-window artifact. Use 
 Inputs:
 
 - `tool_name`: Bundled callable name. Use demo_measure_text for text metrics; see workflow-actions.md for other supported tools.
-- `arguments`: JSON object containing arguments accepted by the chosen bundled callable. For demo_measure_text, supply text.
+- `arguments`: JSON object containing arguments accepted by the chosen bundled callable. For demo_measure_text, supply value.
 
 Result fields: `result`.
 
