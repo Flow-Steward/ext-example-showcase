@@ -1,24 +1,30 @@
 forms:
 - operation_id: test_external_request
-  title: External status request
+  title: "Fetch example external status"
   fields:
   - name: resource_id
     widget_type: text
     label: Resource ID
     required: true
+    help_text: "External resource identifier to include in the example status request."
+    placeholder: "demo-resource-1"
   - name: resource_picker
     widget_type: resource_picker
     label: Pick Resource
     query_id: list_example_resources
+    help_text: "Choose a resource from the bundled example resource query, then use its identifier in Resource ID."
   - name: perform_live_request
     widget_type: boolean
     label: Perform Live Request
+    help_text: "Leave disabled for a deterministic response. Enable only with a configured HTTPS base URL and allowed host; mock_mode=true still suppresses network calls."
 - operation_id: send_review_notification
-  title: Review notification
+  title: "Prepare example review notification"
   fields:
   - name: message
     widget_type: textarea
     label: Message
+    help_text: "Review message included in the example notification request."
+    placeholder: "Please review order A-100."
   - name: severity
     widget_type: select
     label: Severity
@@ -29,25 +35,48 @@ forms:
       value: warning
     - label: Critical
       value: critical
+    help_text: "Choose info, warning or critical for the example notification payload."
 - operation_id: batch_score_records
-  title: Batch scoring
+  title: "Score example records"
   fields:
   - name: records
     widget_type: repeater
     label: Records
+    help_text: "List of JSON record objects with id (or record_id). Records with a missing ID or active=false are reported in failed_records."
   - name: batch_policy
     widget_type: batch_policy
     label: Batch Policy
+    help_text: "Host batch-processing policy for this example repeater. The scoring result reports scored_records and failed_records separately."
 - operation_id: run_demo_tool
-  title: Demo tool invocation
+  title: "Run example catalog tool"
   fields:
   - name: tool_id
     widget_type: resource_picker
     label: Tool
     query_id: list_demo_tools
+    help_text: "Choose a bundled demo tool ID from the tool catalog, such as demo_content_tools. This action returns catalog metadata and echoes payload."
   - name: payload
     widget_type: json
     label: Payload
+    help_text: "JSON object echoed by the selected catalog tool; use it to explore input mapping."
+    placeholder: "{\"topic\":\"launch\"}"
 - operation_id: oauth_profile
-  title: OAuth profile check
+  title: "Inspect example OAuth connection"
   fields: []
+- operation_id: invoke_tool
+  title: Invoke bundled example tool
+  fields:
+  - name: tool_name
+    widget_type: text
+    label: Tool name
+    required: true
+    help_text: Bundled callable name. Use demo_measure_text for text metrics; see workflow-actions.md for other
+      supported tools.
+    placeholder: demo_measure_text
+  - name: arguments
+    widget_type: json
+    label: Arguments
+    required: false
+    help_text: JSON object containing arguments accepted by the chosen bundled callable. For demo_measure_text,
+      supply text.
+    placeholder: '{"value":"Launch update"}'

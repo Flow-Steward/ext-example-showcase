@@ -577,3 +577,7 @@ install the published release from **Extensions › Marketplace**.
 - Use `extension-descriptor.yaml` to publish workflows, agents, skills, tools,
   datasets, saved queries, and Contract v2 builder operations through local YAML
   refs.
+
+## Workflow action guide
+
+See [Workflow actions](docs/workflow-actions.md) for connection setup, input formats, results and practical examples.

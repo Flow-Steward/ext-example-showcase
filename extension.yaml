@@ -2,7 +2,7 @@ manifest_version: 2
 lifecycle: {data_schema_version: 1, data_migrations: []}
 extension_id: flowsteward.example-showcase
 kind: tool_provider
-version: 1.2.5
+version: 1.2.6
 display_name: Example Showcase Extension
 description: |-
   Example Showcase is an SDK reference bundle for developers building Flow Steward extensions. Explore project connection forms, encrypted secrets, declarative pages, queries, actions, workflow trigger declarations and packaged workflows, agents, tools, datasets and saved queries. Example operations demonstrate an external status request, record scoring with partial failures and reusable tool invocation.

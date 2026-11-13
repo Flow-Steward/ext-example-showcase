@@ -1,8 +1,8 @@
 actions:
 - action_id: test_external_request
   workflow_visible: true
-  title: Test external request
-  description: Build a safe external API request and run it in mock mode by default.
+  title: "Fetch example external status"
+  description: "Demonstrates a safe external API request pattern with HTTPS and host allowlisting. Use the bundled example project connections where the action requires one. These actions demonstrate SDK contracts and deterministic sample data; configure a real provider only for the documented live-request example. Example: Use resource_id=demo-resource-1 with live requests disabled to explore the request result without contacting a provider."
   required_scopes:
   - extension:invoke
   handler:
@@ -19,8 +19,8 @@ actions:
   mutates_platform: false
 - action_id: send_review_notification
   workflow_visible: true
-  title: Send review notification
-  description: Demonstrates notification dispatch output shape.
+  title: "Prepare example review notification"
+  description: "Return a simulated review-notification delivery result with a deterministic message ID. Use the bundled example project connections where the action requires one. These actions demonstrate SDK contracts and deterministic sample data; configure a real provider only for the documented live-request example. Example: Submit a warning-severity review message to inspect the simulated delivery result and message preview."
   required_scopes:
   - extension:invoke
   handler:
@@ -34,8 +34,8 @@ actions:
   mutates_platform: false
 - action_id: batch_score_records
   workflow_visible: true
-  title: Batch score records
-  description: Demonstrates bulk action result and partial failure shape.
+  title: "Score example records"
+  description: "Demonstrates a bulk operation contract with partial failure reporting. Use the bundled example project connections where the action requires one. These actions demonstrate SDK contracts and deterministic sample data; configure a real provider only for the documented live-request example. Example: Score records [{\"id\":\"order-100\",\"active\":true},{\"id\":\"order-101\",\"active\":false}] and route the failed_records separately."
   required_scopes:
   - extension:invoke
   handler:
@@ -49,8 +49,8 @@ actions:
   mutates_platform: false
 - action_id: run_demo_tool
   workflow_visible: true
-  title: Run demo tool
-  description: Demonstrates invoking bundled deterministic tool artifacts.
+  title: "Run example catalog tool"
+  description: "Demonstrates mapping a workflow connector step to a bundled deterministic tool artifact. Use the bundled example project connections where the action requires one. These actions demonstrate SDK contracts and deterministic sample data; configure a real provider only for the documented live-request example. Example: Select demo_content_tools and pass {\"topic\":\"launch\"} to inspect the returned tool metadata and payload echo."
   required_scopes:
   - extension:invoke
   handler:
@@ -63,8 +63,8 @@ actions:
   mutates_platform: false
 - action_id: invoke_tool
   workflow_visible: true
-  title: Invoke workflow tool
-  description: Runtime action used by projected workflow tool manifests, including host-managed artifact grants.
+  title: "Invoke bundled example tool"
+  description: "Invokes a bundled demo tool and may publish an allowed run-window artifact. Use the bundled example project connections where the action requires one. These actions demonstrate SDK contracts and deterministic sample data; configure a real provider only for the documented live-request example. Example: Call demo_measure_text with arguments {\"value\":\"Launch update\"} to inspect the deterministic tool result."
   required_scopes:
   - extension:invoke
   handler:
@@ -77,8 +77,8 @@ actions:
   mutates_platform: false
 - action_id: oauth_profile
   workflow_visible: true
-  title: Read OAuth profile
-  description: Demonstrates runtime OAuth access-token injection for a selected project connection.
+  title: "Inspect example OAuth connection"
+  description: "Demonstrates runtime access-token injection for an OAuth-backed project connection. Use the bundled example project connections where the action requires one. These actions demonstrate SDK contracts and deterministic sample data; configure a real provider only for the documented live-request example. Example: Check that a configured OAuth example connection receives an access token at runtime without returning the token."
   required_scopes:
   - extension:invoke
   handler:

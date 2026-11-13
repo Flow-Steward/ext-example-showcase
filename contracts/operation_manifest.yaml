@@ -1,7 +1,7 @@
 operations:
 - operation_id: test_external_request
-  display_name: Fetch External Status
-  description: Demonstrates a safe external API request pattern with HTTPS and host allowlisting.
+  display_name: "Fetch example external status"
+  description: "Demonstrates a safe external API request pattern with HTTPS and host allowlisting. Use the bundled example project connections where the action requires one. These actions demonstrate SDK contracts and deterministic sample data; configure a real provider only for the documented live-request example. Example: Use resource_id=demo-resource-1 with live requests disabled to explore the request result without contacting a provider."
   operation_kind: source
   connection_type_ids: [example_showcase_api]
   category: external_api
@@ -32,8 +32,8 @@ operations:
   - external_request_blocked
   - external_request_failed
 - operation_id: send_review_notification
-  display_name: Send Review Notification
-  description: Demonstrates notification provider dispatch for human review channels.
+  display_name: "Prepare example review notification"
+  description: "Return a simulated review-notification delivery result with a deterministic message ID. Use the bundled example project connections where the action requires one. These actions demonstrate SDK contracts and deterministic sample data; configure a real provider only for the documented live-request example. Example: Submit a warning-severity review message to inspect the simulated delivery result and message preview."
   operation_kind: human_channel
   connection_type_ids: [example_showcase_api]
   category: notifications
@@ -41,9 +41,11 @@ operations:
   - name: message
     value_type: text
     required: true
+    description: "Review message included in the example notification request."
   - name: severity
     value_type: text
     required: false
+    description: "Choose info, warning or critical for the example notification payload."
   outputs:
   - name: delivered
     value_type: boolean
@@ -56,8 +58,8 @@ operations:
   - invalid_payload
   - provider_unavailable
 - operation_id: batch_score_records
-  display_name: Batch Score Records
-  description: Demonstrates a bulk operation contract with partial failure reporting.
+  display_name: "Score example records"
+  description: "Demonstrates a bulk operation contract with partial failure reporting. Use the bundled example project connections where the action requires one. These actions demonstrate SDK contracts and deterministic sample data; configure a real provider only for the documented live-request example. Example: Score records [{\"id\":\"order-100\",\"active\":true},{\"id\":\"order-101\",\"active\":false}] and route the failed_records separately."
   operation_kind: bulk_action
   connection_type_ids: [example_showcase_api]
   category: batch
@@ -71,6 +73,7 @@ operations:
   - name: records
     value_type: array
     required: true
+    description: "List of JSON record objects with id (or record_id). Records with a missing ID or active=false are reported in failed_records."
   outputs:
   - name: scored_records
     value_type: array
@@ -83,17 +86,19 @@ operations:
   - invalid_payload
   - partial_failure
 - operation_id: run_demo_tool
-  display_name: Run Demo Tool
-  description: Demonstrates mapping a workflow connector step to a bundled deterministic tool artifact.
+  display_name: "Run example catalog tool"
+  description: "Demonstrates mapping a workflow connector step to a bundled deterministic tool artifact. Use the bundled example project connections where the action requires one. These actions demonstrate SDK contracts and deterministic sample data; configure a real provider only for the documented live-request example. Example: Select demo_content_tools and pass {\"topic\":\"launch\"} to inspect the returned tool metadata and payload echo."
   operation_kind: action
   category: demo_artifacts
   inputs:
   - name: tool_id
     value_type: text
     required: true
+    description: "Choose a bundled demo tool ID from the tool catalog, such as demo_content_tools. This action returns catalog metadata and echoes payload."
   - name: payload
     value_type: object
     required: false
+    description: "JSON object echoed by the selected catalog tool; use it to explore input mapping."
   outputs:
   - name: tool_result
     value_type: object
@@ -103,17 +108,19 @@ operations:
   - invalid_payload
   - unknown_tool
 - operation_id: invoke_tool
-  display_name: Invoke Demo Tool
-  description: Invokes a bundled demo tool and may publish an allowed run-window artifact.
+  display_name: "Invoke bundled example tool"
+  description: "Invokes a bundled demo tool and may publish an allowed run-window artifact. Use the bundled example project connections where the action requires one. These actions demonstrate SDK contracts and deterministic sample data; configure a real provider only for the documented live-request example. Example: Call demo_measure_text with arguments {\"value\":\"Launch update\"} to inspect the deterministic tool result."
   operation_kind: action
   category: demo_artifacts
   inputs:
   - name: tool_name
     value_type: text
     required: true
+    description: "Bundled callable name. Use demo_measure_text for text metrics; see workflow-actions.md for other supported tools."
   - name: arguments
     value_type: object
     required: false
+    description: "JSON object containing arguments accepted by the chosen bundled callable. For demo_measure_text, supply value."
   outputs:
   - name: result
     value_type: object
@@ -123,8 +130,8 @@ operations:
   - invalid_payload
   - unknown_tool
 - operation_id: oauth_profile
-  display_name: Read OAuth Profile
-  description: Demonstrates runtime access-token injection for an OAuth-backed project connection.
+  display_name: "Inspect example OAuth connection"
+  description: "Demonstrates runtime access-token injection for an OAuth-backed project connection. Use the bundled example project connections where the action requires one. These actions demonstrate SDK contracts and deterministic sample data; configure a real provider only for the documented live-request example. Example: Check that a configured OAuth example connection receives an access token at runtime without returning the token."
   operation_kind: action
   connection_type_ids: [example_showcase_oauth_account]
   category: authentication
