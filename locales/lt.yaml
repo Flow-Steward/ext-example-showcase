@@ -8,8 +8,8 @@ connection.example_showcase_api.display_name: Pavyzdinė išorinė API
 connection.example_showcase_api.description: Projekto ryšys su trečiosios šalies paslauga, kurią naudoja demonstracinis plėtinys.
 connection.example_showcase_oauth_account.display_name: Pavyzdinė OAuth paskyra
 connection.example_showcase_oauth_account.description: Imituota trečiosios šalies paskyra, autorizuota per OAuth2 Authorization Code + PKCE.
-op.test_external_request.display_name: Gauti išorinę būseną
-op.test_external_request.description: Rodo saugų išorinės API užklausos modelį su HTTPS ir leidžiamų serverių sąrašu.
+op.test_external_request.display_name: "Gauti pavyzdinę išorinę būseną"
+op.test_external_request.description: "Rodo saugų išorinės API užklausos modelį su HTTPS ir leidžiamų serverių sąrašu. Kai veiksmui reikia ryšio, naudokite pridėtus pavyzdinius projekto ryšius. Šie veiksmai rodo SDK sutartis ir deterministinius pavyzdinius duomenis; tikrą teikėją konfigūruokite tik aprašytam tikros užklausos pavyzdžiui. Pavyzdys: Naudokite resource_id=demo-resource-1 ir išjungtas tikras užklausas, kad peržiūrėtumėte rezultatą nesikreipdami į paslaugos teikėją."
 op.test_external_request.input.resource_id.display_name: Ištekliaus ID
 op.test_external_request.input.resource_id.description: Išorinio ištekliaus identifikatorius.
 op.test_external_request.input.perform_live_request.display_name: Atlikti tikrą užklausą
@@ -17,34 +17,34 @@ op.test_external_request.input.perform_live_request.description: Numatytoji reik
 op.test_external_request.output.status.display_name: Būsena
 op.test_external_request.output.external_request.display_name: Užklausos santrauka
 category.external_api.display_name: Išorinė API
-op.send_review_notification.display_name: Siųsti peržiūros pranešimą
-op.send_review_notification.description: Rodo pranešimų teikėjo siuntimą žmogaus peržiūros kanalams.
+op.send_review_notification.display_name: "Paruošti pavyzdinį peržiūros pranešimą"
+op.send_review_notification.description: "Grąžina imituotą peržiūros pranešimo pristatymo rezultatą su deterministiniu žinutės ID. Kai veiksmui reikia ryšio, naudokite pridėtus pavyzdinius projekto ryšius. Šie veiksmai rodo SDK sutartis ir deterministinius pavyzdinius duomenis; tikrą teikėją konfigūruokite tik aprašytam tikros užklausos pavyzdžiui. Pavyzdys: Pateikite warning svarbos peržiūros žinutę ir peržiūrėkite imituotą pristatymo rezultatą bei žinutės ištrauką."
 category.notifications.display_name: Pranešimai
-op.batch_score_records.display_name: Įvertinti įrašus paketu
-op.batch_score_records.description: Rodo masinės operacijos sutartį su daliniu klaidų pranešimu.
+op.batch_score_records.display_name: "Įvertinti pavyzdinius įrašus"
+op.batch_score_records.description: "Rodo masinės operacijos sutartį su daliniu klaidų pranešimu. Kai veiksmui reikia ryšio, naudokite pridėtus pavyzdinius projekto ryšius. Šie veiksmai rodo SDK sutartis ir deterministinius pavyzdinius duomenis; tikrą teikėją konfigūruokite tik aprašytam tikros užklausos pavyzdžiui. Pavyzdys: Įvertinkite records=[{\"id\":\"order-100\",\"active\":true},{\"id\":\"order-101\",\"active\":false}] ir atskirai apdorokite failed_records."
 category.batch.display_name: Paketinės operacijos
-op.run_demo_tool.display_name: Paleisti demonstracinį įrankį
-op.run_demo_tool.description: Rodo, kaip darbo eigos jungties žingsnis susiejamas su pridėtu deterministiniu įrankio artefaktu.
+op.run_demo_tool.display_name: "Paleisti pavyzdinį katalogo įrankį"
+op.run_demo_tool.description: "Rodo, kaip darbo eigos jungties žingsnis susiejamas su pridėtu deterministiniu įrankio artefaktu. Kai veiksmui reikia ryšio, naudokite pridėtus pavyzdinius projekto ryšius. Šie veiksmai rodo SDK sutartis ir deterministinius pavyzdinius duomenis; tikrą teikėją konfigūruokite tik aprašytam tikros užklausos pavyzdžiui. Pavyzdys: Pasirinkite demo_content_tools ir perduokite {\"topic\":\"launch\"}, kad peržiūrėtumėte įrankio metaduomenis ir grąžintą įvestį."
 category.demo_artifacts.display_name: Demonstraciniai artefaktai
-op.invoke_tool.display_name: Iškviesti demonstracinį įrankį
-op.invoke_tool.description: Iškviečia pridėtą demonstracinį įrankį ir gali paskelbti leidžiamą vykdymo lango artefaktą.
-op.oauth_profile.display_name: Skaityti OAuth profilį
-op.oauth_profile.description: Rodo prieigos rakto įterpimą vykdymo metu OAuth pagrįstam projekto ryšiui.
+op.invoke_tool.display_name: "Iškviesti pridėtą pavyzdinį įrankį"
+op.invoke_tool.description: "Iškviečia pridėtą demonstracinį įrankį ir gali paskelbti leidžiamą vykdymo lango artefaktą. Kai veiksmui reikia ryšio, naudokite pridėtus pavyzdinius projekto ryšius. Šie veiksmai rodo SDK sutartis ir deterministinius pavyzdinius duomenis; tikrą teikėją konfigūruokite tik aprašytam tikros užklausos pavyzdžiui. Pavyzdys: Iškvieskite demo_measure_text su arguments={\"value\":\"Launch update\"} ir peržiūrėkite deterministinį įrankio rezultatą."
+op.oauth_profile.display_name: "Patikrinti pavyzdinį OAuth ryšį"
+op.oauth_profile.description: "Rodo prieigos rakto įterpimą vykdymo metu OAuth pagrįstam projekto ryšiui. Kai veiksmui reikia ryšio, naudokite pridėtus pavyzdinius projekto ryšius. Šie veiksmai rodo SDK sutartis ir deterministinius pavyzdinius duomenis; tikrą teikėją konfigūruokite tik aprašytam tikros užklausos pavyzdžiui. Pavyzdys: Patikrinkite, ar sukonfigūruotas pavyzdinis OAuth ryšys vykdymo metu gauna prieigos raktą, negrąžinant paties rakto."
 category.authentication.display_name: Autentifikacija
-step.test_external_request.section: Išorinės būsenos užklausa
+step.test_external_request.section: "Gauti pavyzdinę išorinę būseną"
 step.test_external_request.field.resource_id.label: Ištekliaus ID
 step.test_external_request.field.resource_picker.label: Pasirinkti išteklių
 step.test_external_request.field.perform_live_request.label: Atlikti tikrą užklausą
-step.send_review_notification.section: Peržiūros pranešimas
+step.send_review_notification.section: "Paruošti pavyzdinį peržiūros pranešimą"
 step.send_review_notification.field.message.label: Žinutė
 step.send_review_notification.field.severity.label: Svarba
-step.batch_score_records.section: Paketinis vertinimas
+step.batch_score_records.section: "Įvertinti pavyzdinius įrašus"
 step.batch_score_records.field.records.label: Įrašai
 step.batch_score_records.field.batch_policy.label: Paketo politika
-step.run_demo_tool.section: Demonstracinio įrankio iškvietimas
+step.run_demo_tool.section: "Paleisti pavyzdinį katalogo įrankį"
 step.run_demo_tool.field.tool_id.label: Įrankis
 step.run_demo_tool.field.payload.label: Turinys
-step.oauth_profile.section: OAuth profilio patikra
+step.oauth_profile.section: "Patikrinti pavyzdinį OAuth ryšį"
 query.list_example_resources.display_name: Pavyzdinių išteklių sąrašas
 query.list_demo_workflows.display_name: Demonstracinių darbo eigų sąrašas
 query.list_demo_agents.display_name: Demonstracinių agentų sąrašas

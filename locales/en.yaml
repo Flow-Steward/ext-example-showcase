@@ -8,8 +8,8 @@ connection.example_showcase_api.display_name: Example External API
 connection.example_showcase_api.description: Project-scoped connection for a third-party service used by the showcase extension.
 connection.example_showcase_oauth_account.display_name: Example OAuth Account
 connection.example_showcase_oauth_account.description: Mock third-party account authorized with OAuth2 Authorization Code + PKCE.
-op.test_external_request.display_name: Fetch External Status
-op.test_external_request.description: Demonstrates a safe external API request pattern with HTTPS and host allowlisting.
+op.test_external_request.display_name: "Fetch example external status"
+op.test_external_request.description: "Demonstrates a safe external API request pattern with HTTPS and host allowlisting. Use the bundled example project connections where the action requires one. These actions demonstrate SDK contracts and deterministic sample data; configure a real provider only for the documented live-request example. Example: Use resource_id=demo-resource-1 with live requests disabled to explore the request result without contacting a provider."
 op.test_external_request.input.resource_id.display_name: Resource ID
 op.test_external_request.input.resource_id.description: External resource identifier.
 op.test_external_request.input.perform_live_request.display_name: Perform live request
@@ -17,34 +17,34 @@ op.test_external_request.input.perform_live_request.description: Defaults to fal
 op.test_external_request.output.status.display_name: Status
 op.test_external_request.output.external_request.display_name: Request summary
 category.external_api.display_name: External API
-op.send_review_notification.display_name: Send Review Notification
-op.send_review_notification.description: Demonstrates notification provider dispatch for human review channels.
+op.send_review_notification.display_name: "Prepare example review notification"
+op.send_review_notification.description: "Return a simulated review-notification delivery result with a deterministic message ID. Use the bundled example project connections where the action requires one. These actions demonstrate SDK contracts and deterministic sample data; configure a real provider only for the documented live-request example. Example: Submit a warning-severity review message to inspect the simulated delivery result and message preview."
 category.notifications.display_name: Notifications
-op.batch_score_records.display_name: Batch Score Records
-op.batch_score_records.description: Demonstrates a bulk operation contract with partial failure reporting.
+op.batch_score_records.display_name: "Score example records"
+op.batch_score_records.description: "Demonstrates a bulk operation contract with partial failure reporting. Use the bundled example project connections where the action requires one. These actions demonstrate SDK contracts and deterministic sample data; configure a real provider only for the documented live-request example. Example: Score records [{\"id\":\"order-100\",\"active\":true},{\"id\":\"order-101\",\"active\":false}] and route the failed_records separately."
 category.batch.display_name: Batch
-op.run_demo_tool.display_name: Run Demo Tool
-op.run_demo_tool.description: Demonstrates mapping a workflow connector step to a bundled deterministic tool artifact.
+op.run_demo_tool.display_name: "Run example catalog tool"
+op.run_demo_tool.description: "Demonstrates mapping a workflow connector step to a bundled deterministic tool artifact. Use the bundled example project connections where the action requires one. These actions demonstrate SDK contracts and deterministic sample data; configure a real provider only for the documented live-request example. Example: Select demo_content_tools and pass {\"topic\":\"launch\"} to inspect the returned tool metadata and payload echo."
 category.demo_artifacts.display_name: Demo Artifacts
-op.invoke_tool.display_name: Invoke Demo Tool
-op.invoke_tool.description: Invokes a bundled demo tool and may publish an allowed run-window artifact.
-op.oauth_profile.display_name: Read OAuth Profile
-op.oauth_profile.description: Demonstrates runtime access-token injection for an OAuth-backed project connection.
+op.invoke_tool.display_name: "Invoke bundled example tool"
+op.invoke_tool.description: "Invokes a bundled demo tool and may publish an allowed run-window artifact. Use the bundled example project connections where the action requires one. These actions demonstrate SDK contracts and deterministic sample data; configure a real provider only for the documented live-request example. Example: Call demo_measure_text with arguments {\"value\":\"Launch update\"} to inspect the deterministic tool result."
+op.oauth_profile.display_name: "Inspect example OAuth connection"
+op.oauth_profile.description: "Demonstrates runtime access-token injection for an OAuth-backed project connection. Use the bundled example project connections where the action requires one. These actions demonstrate SDK contracts and deterministic sample data; configure a real provider only for the documented live-request example. Example: Check that a configured OAuth example connection receives an access token at runtime without returning the token."
 category.authentication.display_name: Authentication
-step.test_external_request.section: External status request
+step.test_external_request.section: "Fetch example external status"
 step.test_external_request.field.resource_id.label: Resource ID
 step.test_external_request.field.resource_picker.label: Pick Resource
 step.test_external_request.field.perform_live_request.label: Perform Live Request
-step.send_review_notification.section: Review notification
+step.send_review_notification.section: "Prepare example review notification"
 step.send_review_notification.field.message.label: Message
 step.send_review_notification.field.severity.label: Severity
-step.batch_score_records.section: Batch scoring
+step.batch_score_records.section: "Score example records"
 step.batch_score_records.field.records.label: Records
 step.batch_score_records.field.batch_policy.label: Batch Policy
-step.run_demo_tool.section: Demo tool invocation
+step.run_demo_tool.section: "Run example catalog tool"
 step.run_demo_tool.field.tool_id.label: Tool
 step.run_demo_tool.field.payload.label: Payload
-step.oauth_profile.section: OAuth profile check
+step.oauth_profile.section: "Inspect example OAuth connection"
 query.list_example_resources.display_name: List Example Resources
 query.list_demo_workflows.display_name: List Demo Workflows
 query.list_demo_agents.display_name: List Demo Agents
