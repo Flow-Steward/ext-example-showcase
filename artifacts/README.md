@@ -9,10 +9,13 @@ Included artifact groups:
 - `agents/` - demo agent manifests referenced by agent workflow steps.
 - `skills/` - demo skill contracts used by the agents.
 - `tools/` - deterministic demo tool contracts used by connector steps.
-- `datasets/` and `saved_queries/` - project-assigned dataset-query examples.
 
-`extension-descriptor.yaml` publishes every workflow, agent, skill, tool,
-dataset, and saved query through a bundle-local YAML ref. Installing the bundle
-does not create a project, connection, or assignment. Assign the projected
-dataset and workflow to a project, then select that project's Toolbox PostgreSQL
-connection when using `demo_dataset_open_orders`.
+`extension-descriptor.yaml` publishes the 13 workflows, five agents, five skills
+and three tools through bundle-local YAML refs. Installing the bundle does not
+create projects or connections.
+
+The PostgreSQL Dataset and saved-query references and the manual workflow bundle
+live under `examples/postgresql/`. They are not automatic projections. Create a
+project-owned Dataset and saved query using your PostgreSQL connection, then
+import the workflow bundle and select that query. See
+[the PostgreSQL setup guide](../docs/postgresql-dataset-example.md).

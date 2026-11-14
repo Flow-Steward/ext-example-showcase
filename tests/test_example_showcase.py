@@ -271,7 +271,7 @@ def test_descriptor_validates_artifacts_and_contract_v2() -> None:
         (BUNDLE_ROOT / "extension-descriptor.yaml").read_text(encoding="utf-8")
     )
     assert descriptor["extension_id"] == "flowsteward.example-showcase"
-    assert len(descriptor["artifacts"]["workflows"]) == 14
+    assert len(descriptor["artifacts"]["workflows"]) == 13
     assert any(
         item["workflow_id"] == "demo_oauth_connection_binding"
         for item in descriptor["artifacts"]["workflows"]
@@ -279,8 +279,8 @@ def test_descriptor_validates_artifacts_and_contract_v2() -> None:
     assert len(descriptor["artifacts"]["agents"]) == 5
     assert len(descriptor["artifacts"]["skills"]) == 5
     assert len(descriptor["artifacts"]["tools"]) == 3
-    assert len(descriptor["artifacts"]["datasets"]) == 1
-    assert len(descriptor["artifacts"]["saved_queries"]) == 1
+    assert len(descriptor["artifacts"]["datasets"]) == 0
+    assert len(descriptor["artifacts"]["saved_queries"]) == 0
     contract_refs = descriptor["runtime"]["extension_contract_v2"]
     operations = yaml.safe_load((BUNDLE_ROOT / contract_refs["operation_manifest"]).read_text())
     connection_types = yaml.safe_load((BUNDLE_ROOT / contract_refs["connection_types"]).read_text())
@@ -353,12 +353,12 @@ def test_bundle_has_no_install_time_project_state_or_embedded_database_artifacts
 
 def test_dataset_workflow_uses_project_connection_and_declares_toolbox_dependency() -> None:
     workflow = yaml.safe_load(
-        (BUNDLE_ROOT / "artifacts/workflows/demo_dataset_open_orders.yaml").read_text(
+        (BUNDLE_ROOT / "examples/postgresql/workflows/demo_dataset_open_orders.yaml").read_text(
             encoding="utf-8"
         )
     )
     dataset = yaml.safe_load(
-        (BUNDLE_ROOT / "artifacts/datasets/demo_sales_open_orders.yaml").read_text(encoding="utf-8")
+        (BUNDLE_ROOT / "examples/postgresql/datasets/demo_sales_open_orders.yaml").read_text(encoding="utf-8")
     )
 
     assert workflow["dependencies"]["extensions"] == [
@@ -428,10 +428,10 @@ def test_provider_health_and_artifact_queries_pass() -> None:
     )
     assert payload["ok"] is True
     assert payload["result"]["provider"] == "example_showcase"
-    assert payload["summary"]["workflows"] == 14
+    assert payload["summary"]["workflows"] == 13
 
     workflows = _invoke({"mode": "query", "query": {"query_id": "list_demo_workflows"}})
-    assert workflows["total"] == 14
+    assert workflows["total"] == 13
     assert workflows["items"][0]["workflow_id"]
 
     stats = yaml.safe_load(

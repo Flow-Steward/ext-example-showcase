@@ -4,7 +4,7 @@ Example Showcase is an SDK reference bundle for developers building Flow Steward
 
 The included workflows show sequential and parallel Groups, For each loops, collection, Break and Continue, and container error routes. A worked order-processing example introduces hooks: places where each project can add its own steps to an extension's workflow. Use these examples to learn how extension features fit together before adapting the patterns to a real integration.
 
-Install the bundle on a compatible Flow Steward host and create a project connection for the API example. This is a demonstration rather than an operational service: the default status response and review notifications are simulated, and the OAuth example uses a placeholder provider. A live API example needs your own HTTPS endpoint and credentials. The dataset example separately requires the PostgreSQL connector and a project database connection.
+Install the bundle on a compatible Flow Steward host and create a project connection for the API example. This is a demonstration rather than an operational service: the default status response and review notifications are simulated, and the OAuth example uses a placeholder provider. A live API example needs your own HTTPS endpoint and credentials. The PostgreSQL Dataset example is supplied as manual setup templates, not automatically installed artifacts. Create a project-owned Dataset and saved query, then import the demo workflow and select that saved query. See docs/postgresql-dataset-example.md.
 
 This bundle is intentionally synthetic. It shows the shape of a complete local
 subprocess extension without depending on a real third-party service.
@@ -213,7 +213,7 @@ step, so custom logic is an extension action exposed this way.
   `demo_workflow_tools.py`, run through the `invoke_tool` action, and are
   deterministic; `demo_store_product_catalog_artifact` writes a CSV file
   artifact.
-- **Workflows** (`artifacts/workflows/`), 14 of them:
+- **Workflows** (`artifacts/workflows/`), 13 of them:
 
   | Workflow | Shows |
   | --- | --- |
@@ -222,7 +222,6 @@ step, so custom logic is an extension action exposed this way.
   | `demo_content_campaign_router` | Switch branches per content channel |
   | `demo_parallel_launch_review` | Agent steps in parallel lanes, then a merge |
   | `demo_product_catalog_enrichment` | CSV loading, For each validation, Batch, enrichment and a file artifact |
-  | `demo_dataset_open_orders` | A saved dataset query (see [Dataset Example](#dataset-example)) |
   | `demo_incoming_webhook_router` | Routing fields of an incoming webhook |
   | `demo_oauth_connection_binding` | A step whose OAuth connection is picked per project |
   | `demo_expected_failure_guardrail` | A run that ends at Stop · fail on purpose |
@@ -233,8 +232,7 @@ step, so custom logic is an extension action exposed this way.
   agent/skill pairs used by the agent steps (support ticket classifier and
   summarizer, launch copywriter, launch risk reviewer, change request risk
   router).
-- **Datasets and saved queries**: `demo_sales_open_orders` and
-  `demo_open_orders_query`.
+- **Manual PostgreSQL Dataset example** (`examples/postgresql/`): reference Dataset/query YAML and an importable workflow bundle. These are not automatically projected artifacts; see [Dataset Example](#dataset-example).
 
 ### Health
 
@@ -342,13 +340,16 @@ a running host acceptance test; the public SDK has no connection storage harness
 
 ## Dataset Example
 
-Installation is global and creates no project, project connection, or artifact
-assignment. To run `demo_dataset_open_orders`, install and enable
-the PostgreSQL data connector `flowsteward.data-connector-mcp-toolbox-postgres`
-(MCP Toolbox for PostgreSQL), create a PostgreSQL connection in the
-target project, and assign the projected dataset to that project.
-The dataset query resolves the selected connection from project scope at runtime;
-the bundle contains no connection ID, SQLite metadata, or embedded database.
+Installation creates no PostgreSQL Dataset, saved query or project connection. The three
+PostgreSQL reference files remain in the ZIP as **manual setup templates**, so an
+unconfigured database example cannot prevent the rest of the extension installing.
+The other 13 workflows and the existing actions are installed normally.
+
+To run the PostgreSQL example, follow [PostgreSQL Dataset example](docs/postgresql-dataset-example.md):
+create a Dataset and saved query using your project's PostgreSQL connection, import
+`examples/postgresql/workflows/demo_dataset_open_orders.yaml` as a manual workflow, and select
+your saved query on its first step. The example reads the real `orders` table;
+it contains no sales fixture or embedded database.
 
 Active projected workflows can be assigned through ordinary project create/edit
 or through the dedicated workflow-binding API. Flow Steward materializes a

@@ -10,10 +10,9 @@ something this extension does not own, and the platform's own generic checks
 already cover projection lifecycle, catalog state, storage integrity and cleanup
 on a synthetic probe.
 
-The one thing the API cannot do is create rows in an external database, so the
-`demo_dataset_open_orders` matrix entry runs only when the stand has already
-provided a data connection with the demo's own table behind it. When it has not,
-the check records that rather than passing quietly.
+The PostgreSQL Dataset example is a manual setup template under examples/postgresql.
+It is not an automatically projected workflow; its data connection and saved query
+must be created in a project before importing and running the example.
 
 Two kinds of "did not run" are distinguished on purpose, because conflating them
 either hides a broken stand or leaves a permanent red nobody can clear:
@@ -141,7 +140,6 @@ FAILURE_ROUTE_RUNS: dict[str, tuple[str, dict[str, Any], str]] = {
 
 #: Published but not executed here, and why.
 UNEXECUTED = {
-    "demo_dataset_open_orders": "needs an external database this suite cannot seed over the API",
     "demo_oauth_connection_binding": "needs a declared OAuth provider the candidate does not ship",
     "demo_weather_summary_child": "asserted through its parent, demo_travel_day_planner",
 }
@@ -466,8 +464,10 @@ def showcase_dataset_diagnostic(api: Any, evidence: Any) -> None:
     if not workflow_id:
         evidence.add(
             "showcase_dataset_query_failure_diagnostic",
-            False,
-            "demo_dataset_open_orders is not published on this candidate",
+            True,
+            "NOT RUN: the PostgreSQL Dataset demo is a manual setup template; "
+            "create a project Dataset and saved query before importing it. "
+            "See docs/postgresql-dataset-example.md",
         )
         return
     # Its own project on purpose: the point is a *dataset that was never

@@ -2,14 +2,14 @@ manifest_version: 2
 lifecycle: {data_schema_version: 1, data_migrations: []}
 extension_id: flowsteward.example-showcase
 kind: tool_provider
-version: 1.2.6
+version: 1.2.7
 display_name: Example Showcase Extension
 description: |-
   Example Showcase is an SDK reference bundle for developers building Flow Steward extensions. Explore project connection forms, encrypted secrets, declarative pages, queries, actions, workflow trigger declarations and packaged workflows, agents, tools, datasets and saved queries. Example operations demonstrate an external status request, record scoring with partial failures and reusable tool invocation.
 
   The included workflows show sequential and parallel Groups, For each loops, collection, Break and Continue, and container error routes. A worked order-processing example introduces hooks: places where each project can add its own steps to an extension's workflow. Use these examples to learn how extension features fit together before adapting the patterns to a real integration.
 
-  Install the bundle on a compatible Flow Steward host and create a project connection for the API example. This is a demonstration rather than an operational service: the default status response and review notifications are simulated, and the OAuth example uses a placeholder provider. A live API example needs your own HTTPS endpoint and credentials. The dataset example separately requires the PostgreSQL connector and a project database connection.
+  Install the bundle on a compatible Flow Steward host and create a project connection for the API example. This is a demonstration rather than an operational service: the default status response and review notifications are simulated, and the OAuth example uses a placeholder provider. A live API example needs your own HTTPS endpoint and credentials. The PostgreSQL Dataset example is supplied as manual setup templates, not automatically installed artifacts. Create a project-owned Dataset and saved query, then import the demo workflow and select that saved query. See docs/postgresql-dataset-example.md.
 vendor:
   name: Flow Steward
   support_url: https://github.com/Flow-Steward/ext-example-showcase/issues
