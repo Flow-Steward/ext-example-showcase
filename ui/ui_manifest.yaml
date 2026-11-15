@@ -4,3 +4,4 @@ pages:
 - ref: pages/configuration.yaml
 - ref: pages/artifacts.yaml
 - ref: pages/operations.yaml
+- ref: pages/support.yaml

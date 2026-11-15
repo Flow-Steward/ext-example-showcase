@@ -7,7 +7,7 @@ metadata:
     after importing.
 workflows:
 - workflow_id: demo_dataset_open_orders
-  version: 1.2.7
+  version: 1.2.8
   display_name: 'Demo: Dataset Open Orders'
   description: Runs a saved dataset query that reads open orders from the orders table
     through the project's own PostgreSQL connection (MCP Toolbox) and then reuses
